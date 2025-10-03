@@ -167,7 +167,8 @@ if st.session_state.question_number >= 10:
             "current_problem": None,
             "current_answer": None
         })
-        st.experimental_rerun()
+        st.rerun()
+
 
 # ---------- 出題中 ----------
 else:
@@ -216,4 +217,5 @@ else:
         st.session_state.question_number += 1
         st.session_state.current_problem = None
         st.session_state.current_answer = None
-        st.experimental_rerun()
+        st.rerun()
+
