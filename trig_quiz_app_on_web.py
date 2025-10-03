@@ -1,87 +1,155 @@
-import streamlit as st
 import random
-import math
-import pandas as pd
+import streamlit as st
+import time
+from decimal import Decimal, ROUND_HALF_UP
+import pandas as pd  # ← 表表示用
 
-# タイトル
-st.title("三角比クイズアプリ")
+# -----------------------------
+# 三角比簡単化ルール
+# -----------------------------
+def simplify(func, base_angle):
+    rules = {
+        "sin": {
+            90: r"\cos\theta", 180: r"-\sin\theta", 270: r"-\cos\theta",
+            -90: r"-\cos\theta", -180: r"-\sin\theta", -270: r"\cos\theta",
+            0: r"\sin\theta", -0: r"\sin\theta"
+        },
+        "cos": {
+            90: r"-\sin\theta", 180: r"-\cos\theta", 270: r"\sin\theta",
+            -90: r"\sin\theta", -180: r"-\cos\theta", -270: r"-\sin\theta",
+            0: r"\cos\theta", -0: r"\cos\theta"
+        },
+        "tan": {
+            90: r"\displaystyle\frac{1}{\tan\theta}", 180: r"\tan\theta", 270: r"\displaystyle-\frac{1}{\tan\theta}",
+            -90: r"\displaystyle-\frac{1}{\tan\theta}", -180: r"\tan\theta", -270: r"\displaystyle\frac{1}{\tan\theta}",
+            0: r"\tan\theta", -0: r"-\tan\theta"
+        }
+    }
+    return rules[func][base_angle]
 
-# クイズの設定
-angles = [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330, 360]
-ratios = ["sin", "cos", "tan"]
+# -----------------------------
+# 選択肢固定（LaTeX形式）
+# -----------------------------
+BUTTON_OPTIONS = [
+    r"\sin\theta", r"-\sin\theta",
+    r"\cos\theta", r"-\cos\theta",
+    r"\tan\theta", r"-\tan\theta",
+    r"\displaystyle\frac{1}{\tan\theta}", r"\displaystyle-\frac{1}{\tan\theta}"
+]
 
-# 状態の初期化
-if "question" not in st.session_state:
-    st.session_state.question = None
-if "answer" not in st.session_state:
-    st.session_state.answer = None
-if "show_answer" not in st.session_state:
-    st.session_state.show_answer = False
-if "history" not in st.session_state:
-    st.session_state.history = []
-if "count" not in st.session_state:
-    st.session_state.count = 0
+# -----------------------------
+# セッションステート初期化
+# -----------------------------
+for key, val in [("question_number",0), ("score",0), ("start_time",time.time()), 
+                 ("answers",[]), ("current_problem",None), ("current_answer",None)]:
+    if key not in st.session_state:
+        st.session_state[key] = val
 
-# 新しい問題を作る関数
-def new_question():
-    angle = random.choice(angles)
-    ratio = random.choice(ratios)
-    st.session_state.question = f"{ratio}({angle}°)"
+# -----------------------------
+# 問題生成
+# -----------------------------
+def generate_question():
+    funcs = ["sin", "cos", "tan"]
+    base_angles = [90, 180, 270, -90, -180, -270, -0]
+    func = random.choice(funcs)
+    angle = random.choice(base_angles)
     
-    if ratio == "sin":
-        st.session_state.answer = round(math.sin(math.radians(angle)), 3)
-    elif ratio == "cos":
-        st.session_state.answer = round(math.cos(math.radians(angle)), 3)
+    if angle == -0:
+        problem = rf"\{func}(-\theta) を簡単にせよ"
     else:
-        try:
-            st.session_state.answer = round(math.tan(math.radians(angle)), 3)
-        except:
-            st.session_state.answer = "定義されない"
+        problem = rf"\{func}({angle}^\circ+\theta) を簡単にせよ"
     
-    st.session_state.show_answer = False
+    correct = simplify(func, angle)
+    return problem, correct
 
-# 初回表示時
-if st.session_state.question is None:
-    new_question()
+# -----------------------------
+# CSS: ボタンスタイル
+# -----------------------------
+st.markdown("""
+<style>
+div.stButton > button {
+    width: 160px !important;
+    height: 70px !important;
+    font-size: 22px;
+}
+</style>
+""", unsafe_allow_html=True)
 
-# 問題表示
-st.header(f"第 {st.session_state.count + 1} 問")
-st.subheader(st.session_state.question)
+# -----------------------------
+# アプリタイトル
+# -----------------------------
+st.title("三角比クイズ (θの簡単化)")
 
-# 回答入力
-user_input = st.text_input("あなたの答えを入力（例：0.866 または '定義されない'）")
+# -----------------------------
+# 結果表示
+# -----------------------------
+if st.session_state.question_number >= 10:
+    end_time = time.time()
+    elapsed = Decimal(str(end_time - st.session_state.start_time)).quantize(Decimal('0.01'), ROUND_HALF_UP)
+    total = st.session_state.score * 10
+    st.subheader("結果")
+    st.write(f"得点: {total}/100 点")
+    st.write(f"経過時間: {elapsed} 秒")
 
-# ボタン
-col1, col2 = st.columns(2)
-with col1:
-    if st.button("答えを表示"):
-        st.session_state.show_answer = True
+    # ✅ Pandas DataFrameで表表示（きれいに出る）
+    results = []
+    for a in st.session_state.answers:
+        mark = "○" if a["user"] == a["correct"] else "×"
+        results.append({
+            "問題": f"${a['problem']}$",
+            "あなたの解答": f"${a['user']}$",
+            "正解": f"${a['correct']}$",
+            "正誤": mark
+        })
+    df = pd.DataFrame(results)
+    st.write(df.to_html(escape=False), unsafe_allow_html=True)
 
-with col2:
-    if st.button("次の問題"):
-        # 採点して履歴に追加
-        correct = str(st.session_state.answer)
-        user_ans = user_input.strip()
-        result = "正解" if user_ans == correct else "不正解"
-        
-        st.session_state.count += 1
-        st.session_state.history.append({
-            "問題番号": st.session_state.count,
-            "問題": st.session_state.question,
-            "あなたの解答": user_ans,
-            "正解": correct,
-            "正誤": result
+    # もう一度ボタン
+    if st.button("もう一度やる"):
+        st.session_state.update({
+            "question_number":0,
+            "score":0,
+            "start_time":time.time(),
+            "answers":[],
+            "current_problem":None,
+            "current_answer":None
         })
 
-        new_question()
-        st.rerun()
+# -----------------------------
+# 出題中
+# -----------------------------
+else:
+    # 新しい問題を生成
+    if st.session_state.current_problem is None:
+        problem, correct = generate_question()
+        st.session_state.current_problem = problem
+        st.session_state.current_answer = correct
 
-# 答え表示
-if st.session_state.show_answer:
-    st.write(f"正解： **{st.session_state.answer}**")
+    # 問題文表示（LaTeX）
+    st.subheader(f"問題 {st.session_state.question_number+1}: ")
+    st.markdown(rf"$$ {st.session_state.current_problem} $$")
 
-# 履歴表示
-if len(st.session_state.history) > 0:
-    st.subheader("これまでの結果")
-    df = pd.DataFrame(st.session_state.history)
-    st.dataframe(df, use_container_width=True)
+    # 選択肢ボタン 2行×4列
+    clicked_option = None
+    for row in range(2):
+        cols = st.columns(4)
+        for col_idx in range(4):
+            idx = row*4 + col_idx
+            option = BUTTON_OPTIONS[idx]
+            with cols[col_idx]:
+                if st.button(f"${option}$", key=f"{st.session_state.question_number}_{idx}"):
+                    clicked_option = option
+
+    # ボタン押した場合、次の問題へ
+    if clicked_option:
+        st.session_state.answers.append({
+            "problem": st.session_state.current_problem,
+            "user": clicked_option,
+            "correct": st.session_state.current_answer
+        })
+        if clicked_option == st.session_state.current_answer:
+            st.session_state.score += 1
+
+        st.session_state.question_number += 1
+        st.session_state.current_problem = None
+        st.session_state.current_answer = None
