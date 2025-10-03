@@ -2,7 +2,7 @@ import random
 import streamlit as st
 import time
 from decimal import Decimal, ROUND_HALF_UP
-import pandas as pd  # ← 表表示用
+import pandas as pd
 
 # -----------------------------
 # 三角比簡単化ルール
@@ -40,7 +40,7 @@ BUTTON_OPTIONS = [
 # -----------------------------
 # セッションステート初期化
 # -----------------------------
-for key, val in [("question_number",0), ("score",0), ("start_time",time.time()), 
+for key, val in [("question_number",1), ("score",0), ("start_time",time.time()), 
                  ("answers",[]), ("current_problem",None), ("current_answer",None)]:
     if key not in st.session_state:
         st.session_state[key] = val
@@ -83,7 +83,7 @@ st.title("三角比クイズ (θの簡単化)")
 # -----------------------------
 # 結果表示
 # -----------------------------
-if st.session_state.question_number >= 10:
+if st.session_state.question_number > 10:
     end_time = time.time()
     elapsed = Decimal(str(end_time - st.session_state.start_time)).quantize(Decimal('0.01'), ROUND_HALF_UP)
     total = st.session_state.score * 10
@@ -91,12 +91,12 @@ if st.session_state.question_number >= 10:
     st.write(f"得点: {total}/100 点")
     st.write(f"経過時間: {elapsed} 秒")
 
-    # ✅ Pandas DataFrameで表表示（きれいに出る）
+    # Pandas DataFrameで表表示
     results = []
-    for a in st.session_state.answers:
+    for i, a in enumerate(st.session_state.answers, 1):
         mark = "○" if a["user"] == a["correct"] else "×"
         results.append({
-            "問題": f"${a['problem']}$",
+            "問題": f"{i}. ${a['problem']}$",
             "あなたの解答": f"${a['user']}$",
             "正解": f"${a['correct']}$",
             "正誤": mark
@@ -107,12 +107,12 @@ if st.session_state.question_number >= 10:
     # もう一度ボタン
     if st.button("もう一度やる"):
         st.session_state.update({
-            "question_number":0,
-            "score":0,
-            "start_time":time.time(),
-            "answers":[],
-            "current_problem":None,
-            "current_answer":None
+            "question_number": 1,
+            "score": 0,
+            "start_time": time.time(),
+            "answers": [],
+            "current_problem": None,
+            "current_answer": None
         })
 
 # -----------------------------
@@ -126,7 +126,7 @@ else:
         st.session_state.current_answer = correct
 
     # 問題文表示（LaTeX）
-    st.subheader(f"問題 {st.session_state.question_number+1}: ")
+    st.subheader(f"問題 {st.session_state.question_number}: ")
     st.markdown(rf"$$ {st.session_state.current_problem} $$")
 
     # 選択肢ボタン 2行×4列
