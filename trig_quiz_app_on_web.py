@@ -9,37 +9,37 @@ from decimal import Decimal, ROUND_HALF_UP
 def simplify(func, expr):
     rules = {
         "sin": {
-            "90+θ": r"\cos\theta", "180+θ": r"-\sin\theta", "270+θ": r"-\cos\theta",
-            "-90+θ": r"-\cos\theta", "-180+θ": r"-\sin\theta", "-270+θ": r"\cos\theta",
-            "0+θ": r"\sin\theta", "-θ": r"-\sin\theta",
-            "90-θ": r"\cos\theta", "180-θ": r"\sin\theta", "270-θ": r"-\cos\theta",
-            "-90-θ": r"-\cos\theta", "-180-θ": r"-\sin\theta", "-270-θ": r"\cos\theta"
+            "90+θ": r"cos\theta", "180+θ": r"-sin\theta", "270+θ": r"-cos\theta",
+            "-90+θ": r"-cos\theta", "-180+θ": r"-sin\theta", "-270+θ": r"cos\theta",
+            "0+θ": r"sin\theta", "-θ": r"-sin\theta",
+            "90-θ": r"cos\theta", "180-θ": r"sin\theta", "270-θ": r"-cos\theta",
+            "-90-θ": r"-cos\theta", "-180-θ": r"-sin\theta", "-270-θ": r"cos\theta"
         },
         "cos": {
-            "90+θ": r"-\sin\theta", "180+θ": r"-\cos\theta", "270+θ": r"\sin\theta",
-            "-90+θ": r"\sin\theta", "-180+θ": r"-\cos\theta", "-270+θ": r"-\sin\theta",
-            "0+θ": r"\cos\theta", "-θ": r"\cos\theta",
-            "90-θ": r"\sin\theta", "180-θ": r"-\cos\theta", "270-θ": r"-\sin\theta",
-            "-90-θ": r"-\sin\theta", "-180-θ": r"-\cos\theta", "-270-θ": r"\sin\theta"
+            "90+θ": r"-sin\theta", "180+θ": r"-cos\theta", "270+θ": r"sin\theta",
+            "-90+θ": r"sin\theta", "-180+θ": r"-cos\theta", "-270+θ": r"-sin\theta",
+            "0+θ": r"cos\theta", "-θ": r"cos\theta",
+            "90-θ": r"sin\theta", "180-θ": r"-cos\theta", "270-θ": r"-sin\theta",
+            "-90-θ": r"-sin\theta", "-180-θ": r"-cos\theta", "-270-θ": r"sin\theta"
         },
         "tan": {
-            "90+θ": r"\displaystyle\frac{1}{\tan\theta}", "180+θ": r"\tan\theta", "270+θ": r"-\displaystyle\frac{1}{\tan\theta}",
-            "-90+θ": r"-\displaystyle\frac{1}{\tan\theta}", "-180+θ": r"\tan\theta", "-270+θ": r"\displaystyle\frac{1}{\tan\theta}",
-            "0+θ": r"\tan\theta", "-θ": r"-\tan\theta",
-            "90-θ": r"\displaystyle\frac{1}{\tan\theta}", "180-θ": r"-\tan\theta", "270-θ": r"-\displaystyle\frac{1}{\tan\theta}",
-            "-90-θ": r"\displaystyle\frac{1}{\tan\theta}", "-180-θ": r"-\tan\theta", "-270-θ": r"\displaystyle-\frac{1}{\tan\theta}"
+            "90+θ": r"\frac{1}{tan\theta}", "180+θ": r"tan\theta", "270+θ": r"-\frac{1}{tan\theta}",
+            "-90+θ": r"-\frac{1}{tan\theta}", "-180+θ": r"tan\theta", "-270+θ": r"\frac{1}{tan\theta}",
+            "0+θ": r"tan\theta", "-θ": r"-tan\theta",
+            "90-θ": r"\frac{1}{tan\theta}", "180-θ": r"-tan\theta", "270-θ": r"-\frac{1}{tan\theta}",
+            "-90-θ": r"\frac{1}{tan\theta}", "-180-θ": r"-tan\theta", "-270-θ": r"-\frac{1}{tan\theta}"
         }
     }
     return rules[func][expr]
 
 # -----------------------------
-# 選択肢固定（LaTeX形式）
+# 選択肢固定（LaTeX形式、斜体なし）
 # -----------------------------
 BUTTON_OPTIONS = [
-    r"\sin\theta", r"-\sin\theta",
-    r"\cos\theta", r"-\cos\theta",
-    r"\tan\theta", r"-\tan\theta",
-    r"\displaystyle\frac{1}{\tan\theta}", r"-\displaystyle\frac{1}{\tan\theta}"
+    r"sin\theta", r"-sin\theta",
+    r"cos\theta", r"-cos\theta",
+    r"tan\theta", r"-tan\theta",
+    r"\frac{1}{tan\theta}", r"-\frac{1}{tan\theta}"
 ]
 
 # -----------------------------
@@ -64,9 +64,12 @@ def generate_question():
 
     # 問題文作成
     if expr == "-θ":
-        problem = rf"{func}(-\theta) を簡単にせよ"
+        problem = rf"{func}(-θ) を簡単にせよ"
     else:
-        problem = rf"{func}({expr}^\circ) を簡単にせよ"
+        # 数字部分にだけ ° を付ける
+        expr_display = expr.replace("90","90°").replace("180","180°").replace("270","270°")
+        expr_display = expr_display.replace("-90","-90°").replace("-180","-180°").replace("-270","-270°")
+        problem = rf"{func}({expr_display}) を簡単にせよ"
     
     correct = simplify(func, expr)
     return problem, correct
@@ -101,7 +104,7 @@ if st.session_state.question_number > 10:
     st.write(f"経過時間: {elapsed} 秒")
 
     # LaTeXで表形式
-    latex_table = r"\begin{array}{|c|c|c|c|} \hline "
+    latex_table = r"\def\arraystretch{2.0}\begin{array}{|c|c|c|c|} \hline "
     latex_table += "問題 & あなたの解答 & 正解 & 正誤 \\\\ \hline "
     for a in st.session_state.answers:
         mark = "○" if a["user"] == a["correct"] else "×"
