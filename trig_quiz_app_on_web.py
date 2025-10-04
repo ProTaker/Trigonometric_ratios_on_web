@@ -4,7 +4,7 @@ import time
 from decimal import Decimal, ROUND_HALF_UP
 
 # -----------------------------
-# 三角比簡単化ルール
+# 三角比簡単化ルール（分数は\displaystyle）
 # -----------------------------
 def simplify(func, expr):
     rules = {
@@ -23,11 +23,11 @@ def simplify(func, expr):
             "-90°-θ": r"-\sin\theta", "-180°-θ": r"-\cos\theta", "-270°-θ": r"\sin\theta"
         },
         "tan": {
-            "90°+θ": r"\frac{1}{\tan\theta}", "180°+θ": r"\tan\theta", "270°+θ": r"-\frac{1}{\tan\theta}",
-            "-90°+θ": r"-\frac{1}{\tan\theta}", "-180°+θ": r"\tan\theta", "-270°+θ": r"\frac{1}{\tan\theta}",
+            "90°+θ": r"\displaystyle\frac{1}{\tan\theta}", "180°+θ": r"\tan\theta", "270°+θ": r"\displaystyle-\frac{1}{\tan\theta}",
+            "-90°+θ": r"\displaystyle-\frac{1}{\tan\theta}", "-180°+θ": r"\tan\theta", "-270°+θ": r"\displaystyle\frac{1}{\tan\theta}",
             "-θ": r"-\tan\theta",
-            "90°-θ": r"\frac{1}{\tan\theta}", "180°-θ": r"-\tan\theta", "270°-θ": r"-\frac{1}{\tan\theta}",
-            "-90°-θ": r"\frac{1}{\tan\theta}", "-180°-θ": r"-\tan\theta", "-270°-θ": r"\frac{1}{\tan\theta}"
+            "90°-θ": r"\displaystyle\frac{1}{\tan\theta}", "180°-θ": r"-\tan\theta", "270°-θ": r"\displaystyle-\frac{1}{\tan\theta}",
+            "-90°-θ": r"\displaystyle\frac{1}{\tan\theta}", "-180°-θ": r"-\tan\theta", "-270°-θ": r"\displaystyle\frac{1}{\tan\theta}"
         }
     }
     return rules[func][expr]
@@ -39,7 +39,7 @@ BUTTON_OPTIONS = [
     r"\sin\theta", r"-\sin\theta",
     r"\cos\theta", r"-\cos\theta",
     r"\tan\theta", r"-\tan\theta",
-    r"\frac{1}{\tan\theta}", r"-\frac{1}{\tan\theta}"
+    r"\displaystyle\frac{1}{\tan\theta}", r"\displaystyle-\frac{1}{\tan\theta}"
 ]
 
 # -----------------------------
@@ -64,8 +64,6 @@ def generate_question():
     ]
     func = random.choice(funcs)
     expr = random.choice(patterns)
-
-    # 角度部分に°を付ける
 
     if expr == "-θ":
         problem = rf"\{func}(-\theta) を簡単にせよ"
