@@ -4,31 +4,43 @@ import time
 from decimal import Decimal, ROUND_HALF_UP
 
 # -----------------------------
-# 三角比簡単化ルール
+# sin/cosの簡単化ルール
+# -----------------------------
+SIN_RULES = {
+    "90+θ": r"\cos\theta", "180+θ": r"-\sin\theta", "270+θ": r"-\cos\theta",
+    "-90+θ": r"-\cos\theta", "-180+θ": r"-\sin\theta", "-270+θ": r"\cos\theta",
+    "0+θ": r"\sin\theta", "-θ": r"-\sin\theta",
+    "90-θ": r"\cos\theta", "180-θ": r"\sin\theta", "270-θ": r"-\cos\theta"
+}
+
+COS_RULES = {
+    "90+θ": r"-\sin\theta", "180+θ": r"-\cos\theta", "270+θ": r"\sin\theta",
+    "-90+θ": r"\sin\theta", "-180+θ": r"-\cos\theta", "-270+θ": r"-\sin\theta",
+    "0+θ": r"\cos\theta", "-θ": r"\cos\theta",
+    "90-θ": r"\sin\theta", "180-θ": r"-\cos\theta", "270-θ": r"-\sin\theta"
+}
+
+# -----------------------------
+# 三角比簡単化
 # -----------------------------
 def simplify(func, expr):
-    # expr: "90+θ", "180+θ", "-θ", "90-θ", etc.
-    rules = {
-        "sin": {
-            "90+θ": r"\cos\theta", "180+θ": r"-\sin\theta", "270+θ": r"-\cos\theta",
-            "-90+θ": r"-\cos\theta", "-180+θ": r"-\sin\theta", "-270+θ": r"\cos\theta",
-            "0+θ": r"\sin\theta", "-θ": r"-\sin\theta",
-            "90-θ": r"\cos\theta", "180-θ": r"\sin\theta", "270-θ": r"-\cos\theta"
-        },
-        "cos": {
-            "90+θ": r"-\sin\theta", "180+θ": r"-\cos\theta", "270+θ": r"\sin\theta",
-            "-90+θ": r"\sin\theta", "-180+θ": r"-\cos\theta", "-270+θ": r"-\sin\theta",
-            "0+θ": r"\cos\theta", "-θ": r"\cos\theta",
-            "90-θ": r"\sin\theta", "180-θ": r"-\cos\theta", "270-θ": r"-\sin\theta"
-        },
-        "tan": {
-            "90+θ": r"\displaystyle\frac{1}{\tan\theta}", "180+θ": r"\tan\theta", "270+θ": r"\displaystyle-\frac{1}{\tan\theta}",
-            "-90+θ": r"\displaystyle-\frac{1}{\tan\theta}", "-180+θ": r"\tan\theta", "-270+θ": r"\displaystyle\frac{1}{\tan\theta}",
-            "0+θ": r"\tan\theta", "-θ": r"-\tan\theta",
-            "90-θ": r"\displaystyle\frac{1}{\tan\theta}", "180-θ": r"-\tan\theta", "270-θ": r"\displaystyle-\frac{1}{\tan\theta}"
-        }
-    }
-    return rules[func][expr]
+    if func == "sin":
+        return SIN_RULES[expr]
+    elif func == "cos":
+        return COS_RULES[expr]
+    elif func == "tan":
+        # tan = sin/cos
+        sin_val = SIN_RULES[expr]
+        cos_val = COS_RULES[expr]
+        # ±1/tanθ の場合は sin/cos の文字列から判断
+        if sin_val.startswith("-") != cos_val.startswith("-") or ("cos" in sin_val and "sin" in cos_val):
+            return r"\displaystyle-\frac{1}{\tan\theta}"
+        elif sin_val.startswith("-") and cos_val.startswith("-"):
+            return r"\displaystyle\frac{1}{\tan\theta}"
+        else:
+            return r"\tan\theta"
+    else:
+        return ""
 
 # -----------------------------
 # 選択肢固定（LaTeX形式）
@@ -57,11 +69,12 @@ def generate_question():
     func = random.choice(funcs)
     expr = random.choice(patterns)
 
-    # 問題文作成
     if expr == "-θ":
-        problem = rf"\{func}(-\theta) を簡単にせよ"
+        problem = rf"{func}(-\theta) を簡単にせよ"
     else:
-        problem = rf"\{func}({expr}) を簡単にせよ"
+        # 角度に°をつける
+        degree_expr = expr.replace("θ", "^\circ+\theta") if "+" in expr else expr.replace("θ", "^\circ-\theta")
+        problem = rf"{func}({degree_expr}) を簡単にせよ"
     
     correct = simplify(func, expr)
     return problem, correct
@@ -95,10 +108,15 @@ if st.session_state.question_number > 10:
     st.write(f"得点: {total}/100 点")
     st.write(f"経過時間: {elapsed} 秒")
 
-    # 1行1問ずつ表示（LaTeX 数式付き）
-    for i, a in enumerate(st.session_state.answers, 1):
-        mark = "○" if a["user"] == a["correct"] else "×"
-        st.markdown(f"{i}. 問題: ${a['problem']}$  あなたの解答: ${a['user']}$  正解: ${a['correct']}$  正誤: {mark}")
+    # 表形式で表示
+    import pandas as pd
+    df = pd.DataFrame([{
+        "問題": a["problem"],
+        "あなたの解答": a["user"],
+        "正解": a["correct"],
+        "正誤": "○" if a["user"] == a["correct"] else "×"
+    } for a in st.session_state.answers])
+    st.dataframe(df, use_container_width=True)
 
     if st.button("もう一度やる"):
         st.session_state.update({
