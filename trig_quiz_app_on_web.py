@@ -13,7 +13,7 @@ def simplify(func, expr):
             "-90+θ": r"-\cos\theta", "-180+θ": r"-\sin\theta", "-270+θ": r"\cos\theta",
             "0+θ": r"\sin\theta", "-θ": r"-\sin\theta",
             "90-θ": r"\cos\theta", "180-θ": r"\sin\theta", "270-θ": r"-\cos\theta",
-            "-90-θ": r"-\cos\theta", "-180-θ": r"-\sin\theta", "-270-θ": r"\cos\theta"
+            "-90-θ": r"\cos\theta", "-180-θ": r"-\sin\theta", "-270-θ": r"-\cos\theta"
         },
         "cos": {
             "90+θ": r"-\sin\theta", "180+θ": r"-\cos\theta", "270+θ": r"\sin\theta",
@@ -27,7 +27,7 @@ def simplify(func, expr):
             "-90+θ": r"-\frac{1}{\tan\theta}", "-180+θ": r"\tan\theta", "-270+θ": r"\frac{1}{\tan\theta}",
             "0+θ": r"\tan\theta", "-θ": r"-\tan\theta",
             "90-θ": r"\frac{1}{\tan\theta}", "180-θ": r"-\tan\theta", "270-θ": r"-\frac{1}{\tan\theta}",
-            "-90-θ": r"\frac{1}{\tan\theta}", "-180-θ": r"-\tan\theta", "-270-θ": r"-\frac{1}{\tan\theta}"
+            "-90-θ": r"\frac{1}{\tan\theta}", "-180-θ": r"-\tan\theta", "-270-θ": r"\frac{1}{\tan\theta}"
         }
     }
     return rules[func][expr]
@@ -56,23 +56,19 @@ for key, val in [("question_number",1), ("score",0), ("start_time",time.time()),
 def generate_question():
     funcs = ["sin", "cos", "tan"]
     patterns = [
-        "90+θ", "180+θ", "270+θ", "-90+θ", "-180+θ", "-270+θ",
-        "0+θ", "-θ", "90-θ", "180-θ", "270-θ", "-90-θ", "-180-θ", "-270-θ"
+        "90+θ", "180+θ", "270+θ",
+        "-90+θ", "-180+θ", "-270+θ",
+        "0+θ", "-θ",
+        "90-θ", "180-θ", "270-θ",
+        "-90-θ", "-180-θ", "-270-θ"
     ]
     func = random.choice(funcs)
     expr = random.choice(patterns)
 
-    # 表示用: 数字部分にだけ ° をつける
-    def add_degree(s):
-        for num in ["-270","-180","-90","0","90","180","270"]:
-            s = s.replace(num, num + "°")
-        return s
-
     if expr == "-θ":
-        problem = rf"{func}(-θ) を簡単にせよ"
+        problem = rf"\{func}(-\theta) を簡単にせよ"
     else:
-        problem_display = add_degree(expr)
-        problem = rf"{func}({problem_display}) を簡単にせよ"
+        problem = rf"\{func}({expr}) を簡単にせよ"
     
     correct = simplify(func, expr)
     return problem, correct
@@ -106,14 +102,12 @@ if st.session_state.question_number > 10:
     st.write(f"得点: {total}/100 点")
     st.write(f"経過時間: {elapsed} 秒")
 
-    # LaTeXで表形式
-    latex_table = r"\def\arraystretch{2.0}\begin{array}{|c|c|c|c|} \hline "
-    latex_table += "問題 & あなたの解答 & 正解 & 正誤 \\\\ \hline "
+    # LaTeX 表で表示
+    latex_table = r"\begin{array}{|c|c|c|c|} \hline 問題 & あなたの解答 & 正解 & 正誤 \\ \hline "
     for a in st.session_state.answers:
         mark = "○" if a["user"] == a["correct"] else "×"
         latex_table += f"{a['problem']} & {a['user']} & {a['correct']} & {mark} \\\\ \hline "
     latex_table += r"\end{array}"
-
     st.latex(latex_table)
 
     if st.button("もう一度やる"):
@@ -130,17 +124,14 @@ if st.session_state.question_number > 10:
 # 出題中
 # -----------------------------
 else:
-    # 新しい問題を生成
     if st.session_state.current_problem is None:
         problem, correct = generate_question()
         st.session_state.current_problem = problem
         st.session_state.current_answer = correct
 
-    # 問題文表示（LaTeX）
     st.subheader(f"問題 {st.session_state.question_number}: ")
     st.markdown(rf"$$ {st.session_state.current_problem} $$")
 
-    # 選択肢ボタン 2行×4列
     clicked_option = None
     for row in range(2):
         cols = st.columns(4)
@@ -151,7 +142,6 @@ else:
                 if st.button(f"${option}$", key=f"{st.session_state.question_number}_{idx}"):
                     clicked_option = option
 
-    # ボタン押した場合、次の問題へ
     if clicked_option:
         st.session_state.answers.append({
             "problem": st.session_state.current_problem,
