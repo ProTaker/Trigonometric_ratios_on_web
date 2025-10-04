@@ -66,9 +66,13 @@ def generate_question():
     expr = random.choice(patterns)
 
     if expr == "-θ":
-        problem = rf"\{func}(-\theta) を簡単にせよ"
+        trig = \{func}(-\theta)
+        problem = rf"\trig を簡単にせよ"
+        ##problem = rf"\{func}(-\theta) を簡単にせよ"
     else:
-        problem = rf"\{func}({expr}) を簡単にせよ"
+        trig = \{func}({expr})
+        problem = rf"\trig を簡単にせよ"
+        ##problem = rf"\{func}({expr}) を簡単にせよ"
     
     correct = simplify(func, expr)
     return problem, correct
@@ -103,7 +107,7 @@ if st.session_state.question_number > 10:
     st.write(f"経過時間: {elapsed} 秒")
 
     # LaTeX 表で表示（先頭列に問題番号）
-    latex_table = r"\def\arraystretch{2.5}\begin{array}{|c|c|c|c|c|} \hline No. & 問題 & あなたの解答 & 正解 & 正誤 \\ \hline "
+    latex_table = r"\def\arraystretch{2.5}\begin{array}{|c|c|c|c|c|} \hline 番号. & 問題 & あなたの解答 & 正解 & 正誤 \\ \hline "
     for i, a in enumerate(st.session_state.answers, 1):
         mark = "○" if a["user"] == a["correct"] else "×"
         latex_table += f"{i} & {a['problem']} & {a['user']} & {a['correct']} & {mark} \\\\ \hline "
