@@ -66,13 +66,9 @@ def generate_question():
     expr = random.choice(patterns)
 
     if expr == "-θ":
-        trig = \{func}(-\theta)
-        problem = rf"\trig を簡単にせよ"
-        ##problem = rf"\{func}(-\theta) を簡単にせよ"
+        problem = rf"\{func}(-\theta) を簡単にせよ"
     else:
-        trig = \{func}({expr})
-        problem = rf"\trig を簡単にせよ"
-        ##problem = rf"\{func}({expr}) を簡単にせよ"
+        problem = rf"\{func}({expr}) を簡単にせよ"
     
     correct = simplify(func, expr)
     return problem, correct
