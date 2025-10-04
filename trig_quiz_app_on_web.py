@@ -111,7 +111,7 @@ if st.session_state.question_number > 10:
     for a in st.session_state.answers:
         n += 1
         mark = "○" if a["user"] == a["correct"] else "×"
-	latex_table += f"({n}) {a['problem']} & {a['user']} & {a['correct']} & {mark} \\\\ \\hline\n"
+        latex_table += f"({n}) {a['problem']} & {a['user']} & {a['correct']} & {mark} \\\\ \\hline\n"
     latex_table += r"\end{array}"
     st.latex(latex_table)
 
