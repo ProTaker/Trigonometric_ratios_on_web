@@ -66,9 +66,9 @@ def generate_question():
     expr = random.choice(patterns)
 
     if expr == "-θ":
-        problem = rf"\{func} (-\theta) を簡単にせよ"
+        problem = rf"\{func}\ (-\theta) を簡単にせよ"
     else:
-        problem = rf"\{func} ({expr}) を簡単にせよ"
+        problem = rf"\{func}\ ({expr}) を簡単にせよ"
     
     correct = simplify(func, expr)
     return problem, correct
