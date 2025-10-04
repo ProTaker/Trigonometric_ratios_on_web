@@ -9,25 +9,25 @@ from decimal import Decimal, ROUND_HALF_UP
 def simplify(func, expr):
     rules = {
         "sin": {
-            "90+θ": r"\cos\theta", "180+θ": r"-\sin\theta", "270+θ": r"-\cos\theta",
-            "-90+θ": r"-\cos\theta", "-180+θ": r"-\sin\theta", "-270+θ": r"\cos\theta",
-            "0+θ": r"\sin\theta", "-θ": r"-\sin\theta",
-            "90-θ": r"\cos\theta", "180-θ": r"\sin\theta", "270-θ": r"-\cos\theta",
-            "-90-θ": r"\cos\theta", "-180-θ": r"-\sin\theta", "-270-θ": r"-\cos\theta"
+            "90°+θ": r"\cos\theta", "180°+θ": r"-\sin\theta", "270°+θ": r"-\cos\theta",
+            "-90°+θ": r"-\cos\theta", "-180°+θ": r"-\sin\theta", "-270°+θ": r"\cos\theta",
+            "-θ": r"-\sin\theta",
+            "90°-θ": r"\cos\theta", "180°-θ": r"\sin\theta", "270°-θ": r"-\cos\theta",
+            "-90°-θ": r"\cos\theta", "-180°-θ": r"-\sin\theta", "-270°-θ": r"-\cos\theta"
         },
         "cos": {
-            "90+θ": r"-\sin\theta", "180+θ": r"-\cos\theta", "270+θ": r"\sin\theta",
-            "-90+θ": r"\sin\theta", "-180+θ": r"-\cos\theta", "-270+θ": r"-\sin\theta",
-            "0+θ": r"\cos\theta", "-θ": r"\cos\theta",
-            "90-θ": r"\sin\theta", "180-θ": r"-\cos\theta", "270-θ": r"-\sin\theta",
-            "-90-θ": r"-\sin\theta", "-180-θ": r"-\cos\theta", "-270-θ": r"\sin\theta"
+            "90°+θ": r"-\sin\theta", "180°+θ": r"-\cos\theta", "270°+θ": r"\sin\theta",
+            "-90°+θ": r"\sin\theta", "-180°+θ": r"-\cos\theta", "-270°+θ": r"-\sin\theta",
+            "-θ": r"\cos\theta",
+            "90°-θ": r"\sin\theta", "180°-θ": r"-\cos\theta", "270°-θ": r"-\sin\theta",
+            "-90°-θ": r"-\sin\theta", "-180°-θ": r"-\cos\theta", "-270°-θ": r"\sin\theta"
         },
         "tan": {
-            "90+θ": r"\frac{1}{\tan\theta}", "180+θ": r"\tan\theta", "270+θ": r"-\frac{1}{\tan\theta}",
-            "-90+θ": r"-\frac{1}{\tan\theta}", "-180+θ": r"\tan\theta", "-270+θ": r"\frac{1}{\tan\theta}",
-            "0+θ": r"\tan\theta", "-θ": r"-\tan\theta",
-            "90-θ": r"\frac{1}{\tan\theta}", "180-θ": r"-\tan\theta", "270-θ": r"-\frac{1}{\tan\theta}",
-            "-90-θ": r"\frac{1}{\tan\theta}", "-180-θ": r"-\tan\theta", "-270-θ": r"\frac{1}{\tan\theta}"
+            "90°+θ": r"\frac{1}{\tan\theta}", "180°+θ": r"\tan\theta", "270°+θ": r"-\frac{1}{\tan\theta}",
+            "-90°+θ": r"-\frac{1}{\tan\theta}", "-180°+θ": r"\tan\theta", "-270°+θ": r"\frac{1}{\tan\theta}",
+            "-θ": r"-\tan\theta",
+            "90°-θ": r"\frac{1}{\tan\theta}", "180°-θ": r"-\tan\theta", "270°-θ": r"-\frac{1}{\tan\theta}",
+            "-90°-θ": r"\frac{1}{\tan\theta}", "-180°-θ": r"-\tan\theta", "-270°-θ": r"\frac{1}{\tan\theta}"
         }
     }
     return rules[func][expr]
@@ -56,11 +56,11 @@ for key, val in [("question_number",1), ("score",0), ("start_time",time.time()),
 def generate_question():
     funcs = ["sin", "cos", "tan"]
     patterns = [
-        "90+θ", "180+θ", "270+θ",
-        "-90+θ", "-180+θ", "-270+θ",
-        "0+θ", "-θ",
-        "90-θ", "180-θ", "270-θ",
-        "-90-θ", "-180-θ", "-270-θ"
+        "90°+θ", "180°+θ", "270°+θ",
+        "-90°+θ", "-180°+θ", "-270°+θ",
+        "-θ",
+        "90°-θ", "180°-θ", "270°-θ",
+        "-90°-θ", "-180°-θ", "-270°-θ"
     ]
     func = random.choice(funcs)
     expr = random.choice(patterns)
@@ -70,8 +70,7 @@ def generate_question():
     if expr == "-θ":
         problem = rf"\{func}(-\theta) を簡単にせよ"
     else:
-        display_expr = expr.replace("90", "90°").replace("180", "180°").replace("270", "270°").replace("0", "0°")
-        problem = rf"\{func}({display_expr}) を簡単にせよ"
+        problem = rf"\{func}({expr}) を簡単にせよ"
     
     correct = simplify(func, expr)
     return problem, correct
