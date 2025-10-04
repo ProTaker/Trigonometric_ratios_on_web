@@ -105,7 +105,7 @@ if st.session_state.question_number > 10:
     st.write(f"経過時間: {elapsed} 秒")
 
     # LaTeX 表で表示
-    latex_table = r"\begin{array}{|c|c|c|c|} \hline 問題 & あなたの解答 & 正解 & 正誤 \\ \hline "
+    latex_table = r"\renewcommand{\arraystretch}{2.5}\begin{array}{|c|c|c|c|} \hline 問題 & あなたの解答 & 正解 & 正誤 \\ \hline "
     for a in st.session_state.answers:
         mark = "○" if a["user"] == a["correct"] else "×"
         latex_table += f"{a['problem']} & {a['user']} & {a['correct']} & {mark} \\\\ \hline "
