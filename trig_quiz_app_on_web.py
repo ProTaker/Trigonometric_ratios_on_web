@@ -23,10 +23,10 @@ def simplify(func, expr):
             "-90°-θ": r"-\sin\theta", "-180°-θ": r"-\cos\theta", "-270°-θ": r"\sin\theta"
         },
         "tan": {
-            "90°+θ": r"\displaystyle\frac{1}{\tan\theta}", "180°+θ": r"\tan\theta", "270°+θ": r"\displaystyle-\frac{1}{\tan\theta}",
-            "-90°+θ": r"\displaystyle-\frac{1}{\tan\theta}", "-180°+θ": r"\tan\theta", "-270°+θ": r"\displaystyle\frac{1}{\tan\theta}",
+            "90°+θ": r"\displaystyle-\frac{1}{\tan\theta}", "180°+θ": r"\tan\theta", "270°+θ": r"\displaystyle-\frac{1}{\tan\theta}",
+            "-90°+θ": r"\displaystyle-\frac{1}{\tan\theta}", "-180°+θ": r"\tan\theta", "-270°+θ": r"\displaystyle-\frac{1}{\tan\theta}",
             "-θ": r"-\tan\theta",
-            "90°-θ": r"\displaystyle\frac{1}{\tan\theta}", "180°-θ": r"-\tan\theta", "270°-θ": r"\displaystyle-\frac{1}{\tan\theta}",
+            "90°-θ": r"\displaystyle\frac{1}{\tan\theta}", "180°-θ": r"-\tan\theta", "270°-θ": r"\displaystyle\frac{1}{\tan\theta}",
             "-90°-θ": r"\displaystyle\frac{1}{\tan\theta}", "-180°-θ": r"-\tan\theta", "-270°-θ": r"\displaystyle\frac{1}{\tan\theta}"
         }
     }
