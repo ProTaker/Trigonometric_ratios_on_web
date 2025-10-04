@@ -1,46 +1,37 @@
 import random
 import streamlit as st
 import time
+import pandas as pd
 from decimal import Decimal, ROUND_HALF_UP
 
 # -----------------------------
-# sin/cosの簡単化ルール
-# -----------------------------
-SIN_RULES = {
-    "90+θ": r"\cos\theta", "180+θ": r"-\sin\theta", "270+θ": r"-\cos\theta",
-    "-90+θ": r"-\cos\theta", "-180+θ": r"-\sin\theta", "-270+θ": r"\cos\theta",
-    "0+θ": r"\sin\theta", "-θ": r"-\sin\theta",
-    "90-θ": r"\cos\theta", "180-θ": r"\sin\theta", "270-θ": r"-\cos\theta"
-}
-
-COS_RULES = {
-    "90+θ": r"-\sin\theta", "180+θ": r"-\cos\theta", "270+θ": r"\sin\theta",
-    "-90+θ": r"\sin\theta", "-180+θ": r"-\cos\theta", "-270+θ": r"-\sin\theta",
-    "0+θ": r"\cos\theta", "-θ": r"\cos\theta",
-    "90-θ": r"\sin\theta", "180-θ": r"-\cos\theta", "270-θ": r"-\sin\theta"
-}
-
-# -----------------------------
-# 三角比簡単化
+# 三角比簡単化ルール（正しいtanを含む）
 # -----------------------------
 def simplify(func, expr):
-    if func == "sin":
-        return SIN_RULES[expr]
-    elif func == "cos":
-        return COS_RULES[expr]
-    elif func == "tan":
-        # tan = sin/cos
-        sin_val = SIN_RULES[expr]
-        cos_val = COS_RULES[expr]
-        # ±1/tanθ の場合は sin/cos の文字列から判断
-        if sin_val.startswith("-") != cos_val.startswith("-") or ("cos" in sin_val and "sin" in cos_val):
-            return r"\displaystyle-\frac{1}{\tan\theta}"
-        elif sin_val.startswith("-") and cos_val.startswith("-"):
-            return r"\displaystyle\frac{1}{\tan\theta}"
-        else:
-            return r"\tan\theta"
-    else:
-        return ""
+    rules = {
+        "sin": {
+            "90°+θ": r"\cos\theta", "180°+θ": r"-\sin\theta", "270°+θ": r"-\cos\theta",
+            "-90°+θ": r"-\cos\theta", "-180°+θ": r"-\sin\theta", "-270°+θ": r"\cos\theta",
+            "0°+θ": r"\sin\theta", "-θ": r"-\sin\theta",
+            "90°-θ": r"\cos\theta", "180°-θ": r"\sin\theta", "270°-θ": r"-\cos\theta",
+            "-90°-θ": r"-\cos\theta", "-180°-θ": r"\sin\theta", "-270°-θ": r"\cos\theta"
+        },
+        "cos": {
+            "90°+θ": r"-\sin\theta", "180°+θ": r"-\cos\theta", "270°+θ": r"\sin\theta",
+            "-90°+θ": r"\sin\theta", "-180°+θ": r"-\cos\theta", "-270°+θ": r"-\sin\theta",
+            "0°+θ": r"\cos\theta", "-θ": r"\cos\theta",
+            "90°-θ": r"\sin\theta", "180°-θ": r"-\cos\theta", "270°-θ": r"-\sin\theta",
+            "-90°-θ": r"-\sin\theta", "-180°-θ": r"-\cos\theta", "-270°-θ": r"\sin\theta"
+        },
+        "tan": {
+            "90°+θ": r"\displaystyle-\frac{1}{\tan\theta}", "180°+θ": r"\tan\theta", "270°+θ": r"\displaystyle\frac{1}{\tan\theta}",
+            "-90°+θ": r"\displaystyle\frac{1}{\tan\theta}", "-180°+θ": r"\tan\theta", "-270°+θ": r"\displaystyle-\frac{1}{\tan\theta}",
+            "0°+θ": r"\tan\theta", "-θ": r"-\tan\theta",
+            "90°-θ": r"\displaystyle\frac{1}{\tan\theta}", "180°-θ": r"-\tan\theta", "270°-θ": r"\displaystyle-\frac{1}{\tan\theta}",
+            "-90°-θ": r"\displaystyle-\frac{1}{\tan\theta}", "-180°-θ": r"-\tan\theta", "-270°-θ": r"\displaystyle\frac{1}{\tan\theta}"
+        }
+    }
+    return rules[func][expr]
 
 # -----------------------------
 # 選択肢固定（LaTeX形式）
@@ -65,17 +56,12 @@ for key, val in [("question_number",1), ("score",0), ("start_time",time.time()),
 # -----------------------------
 def generate_question():
     funcs = ["sin", "cos", "tan"]
-    patterns = ["90+θ", "180+θ", "270+θ", "-90+θ", "-180+θ", "-270+θ", "0+θ", "-θ", "90-θ", "180-θ", "270-θ"]
+    patterns = ["90°+θ", "180°+θ", "270°+θ", "-90°+θ", "-180°+θ", "-270°+θ",
+                "0°+θ", "-θ", "90°-θ", "180°-θ", "270°-θ", "-90°-θ", "-180°-θ", "-270°-θ"]
     func = random.choice(funcs)
     expr = random.choice(patterns)
-
-    if expr == "-θ":
-        problem = rf"{func}(-\theta) を簡単にせよ"
-    else:
-        # 角度に°をつける
-        degree_expr = expr.replace("θ", "^\circ+\theta") if "+" in expr else expr.replace("θ", "^\circ-\theta")
-        problem = rf"{func}({degree_expr}) を簡単にせよ"
     
+    problem = rf"\{func}({expr}) を簡単にせよ" if expr != "-θ" else rf"\{func}(-\theta) を簡単にせよ"
     correct = simplify(func, expr)
     return problem, correct
 
@@ -108,13 +94,12 @@ if st.session_state.question_number > 10:
     st.write(f"得点: {total}/100 点")
     st.write(f"経過時間: {elapsed} 秒")
 
-    # 表形式で表示
-    import pandas as pd
+    # DataFrame で表表示
     df = pd.DataFrame([{
         "問題": a["problem"],
         "あなたの解答": a["user"],
         "正解": a["correct"],
-        "正誤": "○" if a["user"] == a["correct"] else "×"
+        "正誤": "○" if a["user"]==a["correct"] else "×"
     } for a in st.session_state.answers])
     st.dataframe(df, use_container_width=True)
 
@@ -132,17 +117,14 @@ if st.session_state.question_number > 10:
 # 出題中
 # -----------------------------
 else:
-    # 新しい問題を生成
     if st.session_state.current_problem is None:
         problem, correct = generate_question()
         st.session_state.current_problem = problem
         st.session_state.current_answer = correct
 
-    # 問題文表示（LaTeX）
-    st.subheader(f"問題 {st.session_state.question_number}: ")
+    st.subheader(f"問題 {st.session_state.question_number}:")
     st.markdown(rf"$$ {st.session_state.current_problem} $$")
 
-    # 選択肢ボタン 2行×4列
     clicked_option = None
     for row in range(2):
         cols = st.columns(4)
@@ -153,7 +135,6 @@ else:
                 if st.button(f"${option}$", key=f"{st.session_state.question_number}_{idx}"):
                     clicked_option = option
 
-    # ボタン押した場合、次の問題へ
     if clicked_option:
         st.session_state.answers.append({
             "problem": st.session_state.current_problem,
