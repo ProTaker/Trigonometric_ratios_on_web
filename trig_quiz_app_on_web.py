@@ -65,10 +65,13 @@ def generate_question():
     func = random.choice(funcs)
     expr = random.choice(patterns)
 
+    # 角度部分に°を付ける
+    display_expr = expr.replace("90", "90°").replace("180", "180°").replace("270", "270°").replace("0", "0°")
+
     if expr == "-θ":
         problem = rf"\{func}(-\theta) を簡単にせよ"
     else:
-        problem = rf"\{func}({expr}) を簡単にせよ"
+        problem = rf"\{func}({display_expr}) を簡単にせよ"
     
     correct = simplify(func, expr)
     return problem, correct
