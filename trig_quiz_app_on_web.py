@@ -107,11 +107,11 @@ if st.session_state.question_number > 10:
 
     # LaTeX 表で表示
     latex_table = r"\begin{array}{|c|c|c|c|c|} \hline 問題番号 & 問題  & あなたの解答 & 正解 & 正誤 \\ \hline "
-    n = 0
+    n == 0
     for a in st.session_state.answers:
 　　　　n += 1
         mark = "○" if a["user"] == a["correct"] else "×"
-        latex_table += {(n)} & f"{a['problem']} & {a['user']} & {a['correct']} & {mark} \\\\ \hline "
+        latex_table += {"("n")"} & f"{a['problem']} & {a['user']} & {a['correct']} & {mark} \\\\ \hline "
     latex_table += r"\end{array}"
     st.latex(latex_table)
 
