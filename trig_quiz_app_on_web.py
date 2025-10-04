@@ -2,12 +2,12 @@ import random
 import streamlit as st
 import time
 from decimal import Decimal, ROUND_HALF_UP
-import pandas as pd
 
 # -----------------------------
 # 三角比簡単化ルール
 # -----------------------------
 def simplify(func, expr):
+    # expr: "90+θ", "180+θ", "-θ", "90-θ", etc.
     rules = {
         "sin": {
             "90+θ": r"\cos\theta", "180+θ": r"-\sin\theta", "270+θ": r"-\cos\theta",
@@ -61,10 +61,7 @@ def generate_question():
     if expr == "-θ":
         problem = rf"\{func}(-\theta) を簡単にせよ"
     else:
-        # 角度部分に°をつける
-        expr_with_deg = expr.replace("+θ", "°+θ").replace("-θ", "-θ").replace("-θ", "-θ")
-        expr_with_deg = expr_with_deg.replace("-0°+θ", "0°+θ")  # -0°修正
-        problem = rf"\{func}({expr_with_deg}) を簡単にせよ"
+        problem = rf"\{func}({expr}) を簡単にせよ"
     
     correct = simplify(func, expr)
     return problem, correct
@@ -98,18 +95,10 @@ if st.session_state.question_number > 10:
     st.write(f"得点: {total}/100 点")
     st.write(f"経過時間: {elapsed} 秒")
 
-    # Pandas DataFrameで表形式表示
-    data = []
+    # 1行1問ずつ表示（LaTeX 数式付き）
     for i, a in enumerate(st.session_state.answers, 1):
         mark = "○" if a["user"] == a["correct"] else "×"
-        data.append({
-            "問題": f"${a['problem']}$",
-            "あなたの解答": f"${a['user']}$",
-            "正解": f"${a['correct']}$",
-            "正誤": mark
-        })
-    df = pd.DataFrame(data)
-    st.table(df)
+        st.markdown(f"{i}. 問題: ${a['problem']}$  あなたの解答: ${a['user']}$  正解: ${a['correct']}$  正誤: {mark}")
 
     if st.button("もう一度やる"):
         st.session_state.update({
