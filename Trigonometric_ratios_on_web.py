@@ -2,7 +2,7 @@ import streamlit as st
 import random
 import time
 from decimal import Decimal, ROUND_HALF_UP
-import pandas as pd 
+import pandas as pd # 👈 追加: 結果表示にPandasを使用
 
 st.title("三角比クイズ（sin・cos・tan 有名角編）")
 
@@ -153,15 +153,14 @@ if st.session_state.show_result:
     
     st.subheader("全解答の確認")
     
-    # ✅ 修正箇所：DataFrameの「問題」列の三角比を \text{} で囲み、st.tableで表示
+    # ✅ 修正箇所：Pandas DataFrameとst.table()で安定表示
     table_data = []
     for i, item in enumerate(st.session_state.history, 1):
         # 問題表示の調整（マイナス角にのみ括弧をつける）
         if item['angle'] < 0:
-            # \cos などのコマンドを $\text{cos}(...)$ の形式で囲むことで、DataFrame内で数式としてレンダリングさせる
-            func_disp = rf"$\text{{{item['func']}}}\left({item['angle']}^\circ\right)$"
+            func_disp = rf"$\text{{}}{item['func']}\left({item['angle']}^\circ\right)$"
         else:
-            func_disp = rf"$\text{{{item['func']}}} {item['angle']}^\circ$"
+            func_disp = rf"$\text{{}}{item['func']} {item['angle']}^\circ$"
             
         user_disp = latex_options.get(item['user_answer'], item['user_answer'])
         correct_disp = latex_options.get(item['correct_answer'], item['correct_answer'])
@@ -187,17 +186,17 @@ if st.session_state.show_result:
         st.rerun()
     
 else:
-    # 問題の表示 (中略)
+    # 問題の表示
     st.subheader(f"問題 {st.session_state.question_count + 1} / {MAX_QUESTIONS}")
     
     current_func = st.session_state.func
     current_angle = st.session_state.angle
     
-    # 問題文も \text{} を使って美しく表示
+    # ✅ 修正箇所: マイナスの角度のときのみ括弧をつける
     if current_angle < 0:
-        question_latex = rf"$$ \text{{{current_func}}}\left({current_angle}^\circ\right)\ の値は？ $$"
+        question_latex = rf"$$ \{current_func}\left({current_angle}^\circ\right)\ の値は？ $$"
     else:
-        question_latex = rf"$$ \text{{{current_func}}} {current_angle}^\circ\ の値は？ $$"
+        question_latex = rf"$$ \{current_func} {current_angle}^\circ\ の値は？ $$"
         
     st.markdown(question_latex)
 
