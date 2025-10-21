@@ -1,7 +1,23 @@
 import streamlit as st
 import random
+import time # timeモジュールは最終結果表示に使う可能性を考慮し残す（現状未使用だが念のため）
+from decimal import Decimal, ROUND_HALF_UP # Decimalモジュールも同様に残す（現状未使用だが念のため）
 
 st.title("三角比クイズ（sin・cos・tan 有名角編）")
+
+# -----------------------------
+# ✅ CSS（ボタンサイズ調整）- 添付ファイルに合わせる
+# -----------------------------
+st.markdown("""
+<style>
+/* 選択肢ボタンのサイズとフォントを統一 */
+div.stButton > button {
+    width: 160px !important;
+    height: 70px !important;
+    font-size: 22px;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # 有名角（度数法）
 famous_angles = [-360, -330, -315, -300, -270, -240, -225, -210, -180, -150, -135, -120, -90, -60, -45, -30,
@@ -10,7 +26,7 @@ famous_angles = [-360, -330, -315, -300, -270, -240, -225, -210, -180, -150, -13
 # 出題対象の三角関数
 functions = ["sin", "cos", "tan"]
 
-# ✅ 選択肢（LaTeX表記できれいに）
+# ✅ 選択肢（LaTeX表記できれいに）- 1/√3 の表記と「なし」に戻す
 latex_options = {
     "0": r"$\displaystyle 0$",
     "1/2": r"$\displaystyle \frac{1}{2}$",
@@ -25,7 +41,7 @@ latex_options = {
     "-√3": r"$\displaystyle -\sqrt{3}$",
     "1/√3": r"$\displaystyle \frac{1}{\sqrt{3}}$",
     "-1/√3": r"$\displaystyle -\frac{1}{\sqrt{3}}$",
-    "定義なし": r"$\text{定義なし}$"
+    "なし": r"$\text{なし}$" # 「なし」に戻す
 }
 
 # -----------------------------------------------
@@ -38,7 +54,7 @@ sin_cos_options = [
 tan_options = [
     "0", "1", "√3", "1/√3",
     "-1", "-√3", "-1/√3",
-    "定義なし"
+    "なし" # 「なし」を使用
 ]
 
 # 有名角に対する正解辞書
@@ -62,17 +78,17 @@ answers = {
         330: "√3/2", 360: "1", 390: "√3/2", 405: "√2/2", 420: "1/2", 450: "0"
     },
     "tan": {
-        -360: "0", -330: "1/√3", -315: "1", -300: "√3", -270: "定義なし",
+        -360: "0", -330: "1/√3", -315: "1", -300: "√3", -270: "なし",
         -240: "√3", -225: "1", -210: "1/√3", -180: "0", -150: "-1/√3",
-        -135: "-1", -120: "-√3", -90: "定義なし", -60: "-√3", -45: "-1",
-        -30: "-1/√3", 0: "0", 30: "1/√3", 45: "1", 60: "√3", 90: "定義なし",
+        -135: "-1", -120: "-√3", -90: "なし", -60: "-√3", -45: "-1",
+        -30: "-1/√3", 0: "0", 30: "1/√3", 45: "1", 60: "√3", 90: "なし",
         120: "-√3", 135: "-1", 150: "-1/√3", 180: "0", 210: "1/√3",
-        225: "1", 240: "√3", 270: "定義なし", 300: "-√3", 315: "-1",
-        330: "-1/√3", 360: "0", 390: "1/√3", 405: "1", 420: "√3", 450: "定義なし"
+        225: "1", 240: "√3", 270: "なし", 300: "-√3", 315: "-1",
+        330: "-1/√3", 360: "0", 390: "1/√3", 405: "1", 420: "√3", 450: "なし"
     }
 }
 
-MAX_QUESTIONS = 10 # 制限問題数
+MAX_QUESTIONS = 10 
 
 # 新しい問題を作る関数
 def new_question():
@@ -80,7 +96,7 @@ def new_question():
     st.session_state.angle = random.choice(famous_angles)
     st.session_state.selected = None
     st.session_state.result = ""
-    st.session_state.show_result = False # 結果表示フラグをリセット
+    st.session_state.show_result = False
 
 # セッションステートの初期化とリセット
 def initialize_session_state():
@@ -88,7 +104,8 @@ def initialize_session_state():
         st.session_state.score = 0
         st.session_state.question_count = 0
         st.session_state.history = []
-        st.session_state.show_result = False # 結果表示フラグ
+        st.session_state.show_result = False
+        st.session_state.start_time = time.time() # タイム計測開始
         new_question()
 
 def check_answer_and_advance():
@@ -122,7 +139,7 @@ def check_answer_and_advance():
     else:
         new_question()
     
-    st.rerun() # 画面を更新
+    st.rerun()
 
 # 初期化実行
 initialize_session_state()
@@ -133,23 +150,29 @@ initialize_session_state()
 
 # 問題数が MAX_QUESTIONS に達しているかチェック
 if st.session_state.show_result:
+    end_time = time.time()
+    elapsed = Decimal(str(end_time - st.session_state.start_time)).quantize(Decimal('0.01'), ROUND_HALF_UP)
+    
     st.header("✨ クイズ終了！ 結果発表 ✨")
     st.markdown(f"**あなたのスコア: {st.session_state.score} / {MAX_QUESTIONS} 問正解**")
+    st.write(f"**経過時間: {elapsed} 秒**")
     st.divider()
     
     st.subheader("全解答の確認")
-    for i, item in enumerate(st.session_state.history):
-        question_text = f"Q{i+1}: ${item['func']}({item['angle']}^\\circ)$"
+    
+    # 添付ファイル (trig_quiz_choice_rad_app_on_web.py) に倣い、結果をLaTeX表で表示
+    latex_table = r"\def\arraystretch{2.5}\begin{array}{|c|c|c|c|c|} \hline 番号 & 問題 & あなたの解答 & 正解 & 正誤 \\ \hline "
+    for i, item in enumerate(st.session_state.history, 1):
+        question_text = f"\{item['func']}\left({item['angle']}^\\circ\right)"
         user_latex = latex_options.get(item['user_answer'], item['user_answer'])
         correct_latex = latex_options.get(item['correct_answer'], item['correct_answer'])
         
-        result_icon = "✅" if item['is_correct'] else "❌"
+        mark = "○" if item['is_correct'] else "×"
         
-        st.markdown(f"**{result_icon}** {question_text}")
-        st.markdown(f"**あなたの答え:** {user_latex}")
-        st.markdown(f"**正解:** {correct_latex}")
-        st.markdown("---")
-        
+        latex_table += f"{i} & ${question_text}$ & {user_latex} & {correct_latex} & {mark} \\\\ \hline "
+    latex_table += r"\end{array}"
+    st.latex(latex_table)
+
     if st.button("もう一度挑戦する"):
         st.session_state.clear()
         initialize_session_state()
@@ -157,10 +180,11 @@ if st.session_state.show_result:
     
 else:
     # 問題の表示
-    st.subheader(f"第 {st.session_state.question_count + 1} 問 / {MAX_QUESTIONS}")
+    st.subheader(f"問題 {st.session_state.question_count + 1} / {MAX_QUESTIONS}")
     
     current_func = st.session_state.func
-    st.subheader(f"${current_func}({st.session_state.angle}^\\circ)$ の値は？")
+    # 問題文も添付ファイルに倣って $ $ で囲む
+    st.markdown(rf"$$ \{current_func}\left({st.session_state.angle}^\circ\right)\ の値は？ $$")
 
     # 選択肢の決定
     if current_func in ["sin", "cos"]:
@@ -179,13 +203,11 @@ else:
                 st.session_state.result = f"選択中: {latex_options[key]}"
 
     # 結果表示（選択中の答えを示すために利用）
-    st.markdown(st.session_state.result)
+    if st.session_state.selected:
+        st.markdown(st.session_state.result)
+    else:
+        st.markdown("---")
     
-    # 「解答を確認」ボタンは非表示（ご要望により10問終わるまでスキップ）
-    # 代わりに「次の問題へ」ボタンで回答をチェックし、進める
-
     # 次の問題ボタン（回答確定と次の問題への遷移を兼ねる）
     if st.button("解答を確定し、次の問題へ"):
         check_answer_and_advance()
-
-    # st.markdown(st.session_state.result) # ここは選択中の答え表示に使うため、結果表示は最後に集約
