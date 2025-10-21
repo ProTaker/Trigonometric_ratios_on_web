@@ -109,7 +109,6 @@ def initialize_session_state():
         new_question()
 
 def check_answer_and_advance():
-    # 選択されていない場合はエラーメッセージを表示し、rerunしない
     if st.session_state.selected is None:
         st.session_state.result = "選択肢を選んでください。"
         return
@@ -140,7 +139,6 @@ def check_answer_and_advance():
     else:
         new_question()
     
-    # 選択肢が押されたら、ここで強制的に画面を更新し、次の問題へ遷移させる
     st.rerun()
 
 # 初期化実行
@@ -162,19 +160,24 @@ if st.session_state.show_result:
     
     st.subheader("全解答の確認")
     
-    # LaTeX表で結果を表示
-    # \\def\\arraystretch{2.5}\\begin{array}{|c|c|c|c|c|} \\hline 番号 & 問題 & あなたの解答 & 正解 & 正誤 \\\\hline 
-    latex_table = "\\\\def\\\\arraystretch{2.5}\\\\begin{array}{|c|c|c|c|c|} \\\\hline 番号 & 問題 & あなたの解答 & 正解 & 正誤 \\\\hline "
+    # ✅ LaTeXのバックスラッシュを修正。LaTeXコマンドは \\、ラインブレイクは \\\\
+    # Python文字列: \def は \\def、\begin は \\begin
+    latex_table = "\\def\\arraystretch{2.5}\\begin{array}{|c|c|c|c|c|} \\hline 番号 & 問題 & あなたの解答 & 正解 & 正誤 \\hline "
+    
     for i, item in enumerate(st.session_state.history, 1):
+        # 問題: \sin\left(30^\circ\right) の形式に
         question_text = f"\\{item['func']}\\left({item['angle']}^\\circ\\right)" 
         user_latex = latex_options.get(item['user_answer'], item['user_answer'])
         correct_latex = latex_options.get(item['correct_answer'], item['correct_answer'])
         
         mark = "○" if item['is_correct'] else "×"
         
-        latex_table += f"{i} & ${question_text}$ & {user_latex} & {correct_latex} & {mark} \\\\ \\\\hline "
-    latex_table += "\\\\end{array}"
+        # ラインブレイクは \\\\ 、\hline は \hline (Python文字列では \\hline)
+        latex_table += f"{i} & ${question_text}$ & {user_latex} & {correct_latex} & {mark} \\\\ \\hline "
     
+    latex_table += "\\end{array}"
+    
+    # st.latexで表を表示
     st.latex(latex_table)
 
     if st.button("もう一度挑戦する"):
@@ -200,13 +203,9 @@ else:
     for i, key in enumerate(display_options):
         with cols[i % 4]:
             button_key = f"option_{st.session_state.question_count}_{key}"
-            # ✅ ボタンが押されたら、選択を確定し、即座に次の問題へ遷移
+            # ボタンが押されたら、選択を確定し、即座に次の問題へ遷移
             if st.button(latex_options[key], use_container_width=True, key=button_key):
                 st.session_state.selected = key
                 check_answer_and_advance() 
     
-    # 選択中の答え表示（自動遷移するため削除）
-    # st.markdown(st.session_state.result)
     st.markdown("---")
-    
-    # 「解答を確定し、次の問題へ」ボタンは削除
