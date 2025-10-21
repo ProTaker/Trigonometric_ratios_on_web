@@ -170,8 +170,7 @@ if st.session_state.show_result:
     df = pd.DataFrame(table_data)
 
     # 見やすい表として表示
-    st.table(df)
-    
+    st.table(df.drop(columns=["番号"]))    
 
     if st.button("もう一度挑戦する"):
         st.session_state.clear()
