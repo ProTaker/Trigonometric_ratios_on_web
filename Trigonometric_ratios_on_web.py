@@ -4,7 +4,7 @@ import time
 from decimal import Decimal, ROUND_HALF_UP
 import pandas as pd 
 
-st.title("三角比クイズ（sin・cos・tan 有名角編）")
+st.title("三角比クイズ（有名角編）")
 
 # -----------------------------
 # CSS（ボタンサイズ調整と列幅固定、中央揃えの再適用）
@@ -209,7 +209,7 @@ if not st.session_state.range_selected:
         initialize_session_state()
         st.rerun()
 
-    if range_cols[2].button(r"$-360^\circ \sim 450^\circ$", use_container_width=True):
+    if range_cols[2].button(r"全範囲", use_container_width=True):
         st.session_state.angle_range = "ALL"
         st.session_state.range_selected = True
         initialize_session_state()
