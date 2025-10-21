@@ -7,7 +7,7 @@ import pandas as pd
 st.title("三角比クイズ（sin・cos・tan 有名角編）")
 
 # -----------------------------
-# CSS（ボタンサイズ調整と列幅固定、中央揃えの追加）
+# CSS（列幅固定とセル内中央揃えの修正）
 # -----------------------------
 st.markdown("""
 <style>
@@ -22,19 +22,22 @@ div.stButton > button {
     font-size: 18px; /* 全体フォントサイズ調整 */
 }
 
-/* ⭐︎⭐︎ 修正箇所: st.tableを中央揃えにするCSSを追加 ⭐︎⭐︎ */
-/* st.tableのコンテナ要素を特定し、中央揃えを適用 */
+/* テーブル全体の配置を中央に（維持） */
 .stTable {
-    width: fit-content; /* テーブルの幅を内容に合わせる */
-    margin-left: auto;  /* 左側のマージンを自動調整 */
-    margin-right: auto; /* 右側のマージンを自動調整 */
+    width: fit-content; 
+    margin-left: auto;  
+    margin-right: auto; 
 }
 
-/* 列幅固定の維持 */
+/* ⭐︎⭐︎ 修正箇所: すべてのセルを中央揃えにする ⭐︎⭐︎ */
 .stTable table th, .stTable table td {
     white-space: nowrap; /* セル内の折り返しを禁止 */
-    text-align: center; /* セル内のテキストも中央揃えにする */
+    /* !important を付けて強制的に中央揃えを適用 */
+    text-align: center !important; 
+    vertical-align: middle !important; /* 縦方向も中央に */
 }
+
+/* 列幅固定の維持 (text-alignは上記で一括適用) */
 /* 1列目 (番号/インデックス) */
 .stTable table th:nth-child(1), .stTable table td:nth-child(1) {
     width: 60px; 
