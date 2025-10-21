@@ -148,4 +148,65 @@ initialize_session_state()
 
 # -----------------------------------------------
 # アプリの描画
-# ----------------
+# -----------------------------------------------
+
+# 問題数が MAX_QUESTIONS に達しているかチェック
+if st.session_state.show_result:
+    end_time = time.time()
+    elapsed = Decimal(str(end_time - st.session_state.start_time)).quantize(Decimal('0.01'), ROUND_HALF_UP)
+    
+    st.header("✨ クイズ終了！ 結果発表 ✨")
+    st.markdown(f"**あなたのスコア: {st.session_state.score} / {MAX_QUESTIONS} 問正解**")
+    st.write(f"**経過時間: {elapsed} 秒**")
+    st.divider()
+    
+    st.subheader("全解答の確認")
+    
+    # LaTeX表で結果を表示
+    # \\def\\arraystretch{2.5}\\begin{array}{|c|c|c|c|c|} \\hline 番号 & 問題 & あなたの解答 & 正解 & 正誤 \\\\hline 
+    latex_table = "\\\\def\\\\arraystretch{2.5}\\\\begin{array}{|c|c|c|c|c|} \\\\hline 番号 & 問題 & あなたの解答 & 正解 & 正誤 \\\\hline "
+    for i, item in enumerate(st.session_state.history, 1):
+        question_text = f"\\{item['func']}\\left({item['angle']}^\\circ\\right)" 
+        user_latex = latex_options.get(item['user_answer'], item['user_answer'])
+        correct_latex = latex_options.get(item['correct_answer'], item['correct_answer'])
+        
+        mark = "○" if item['is_correct'] else "×"
+        
+        latex_table += f"{i} & ${question_text}$ & {user_latex} & {correct_latex} & {mark} \\\\ \\\\hline "
+    latex_table += "\\\\end{array}"
+    
+    st.latex(latex_table)
+
+    if st.button("もう一度挑戦する"):
+        st.session_state.clear()
+        initialize_session_state()
+        st.rerun()
+    
+else:
+    # 問題の表示
+    st.subheader(f"問題 {st.session_state.question_count + 1} / {MAX_QUESTIONS}")
+    
+    current_func = st.session_state.func
+    st.markdown(rf"$$ \{current_func}\left({st.session_state.angle}^\circ\right)\ の値は？ $$")
+
+    # 選択肢の決定
+    if current_func in ["sin", "cos"]:
+        display_options = sin_cos_options
+    else:
+        display_options = tan_options
+
+    # 選択肢ボタンの表示と処理
+    cols = st.columns(4) 
+    for i, key in enumerate(display_options):
+        with cols[i % 4]:
+            button_key = f"option_{st.session_state.question_count}_{key}"
+            # ✅ ボタンが押されたら、選択を確定し、即座に次の問題へ遷移
+            if st.button(latex_options[key], use_container_width=True, key=button_key):
+                st.session_state.selected = key
+                check_answer_and_advance() 
+    
+    # 選択中の答え表示（自動遷移するため削除）
+    # st.markdown(st.session_state.result)
+    st.markdown("---")
+    
+    # 「解答を確定し、次の問題へ」ボタンは削除
