@@ -1,12 +1,12 @@
 import streamlit as st
 import random
-import time # timeモジュールは最終結果表示に使う可能性を考慮し残す（現状未使用だが念のため）
-from decimal import Decimal, ROUND_HALF_UP # Decimalモジュールも同様に残す（現状未使用だが念のため）
+import time
+from decimal import Decimal, ROUND_HALF_UP
 
 st.title("三角比クイズ（sin・cos・tan 有名角編）")
 
 # -----------------------------
-# ✅ CSS（ボタンサイズ調整）- 添付ファイルに合わせる
+# ✅ CSS（ボタンサイズ調整）
 # -----------------------------
 st.markdown("""
 <style>
@@ -26,7 +26,7 @@ famous_angles = [-360, -330, -315, -300, -270, -240, -225, -210, -180, -150, -13
 # 出題対象の三角関数
 functions = ["sin", "cos", "tan"]
 
-# ✅ 選択肢（LaTeX表記できれいに）- 1/√3 の表記と「なし」に戻す
+# ✅ 選択肢（LaTeX表記できれいに）
 latex_options = {
     "0": r"$\displaystyle 0$",
     "1/2": r"$\displaystyle \frac{1}{2}$",
@@ -41,7 +41,7 @@ latex_options = {
     "-√3": r"$\displaystyle -\sqrt{3}$",
     "1/√3": r"$\displaystyle \frac{1}{\sqrt{3}}$",
     "-1/√3": r"$\displaystyle -\frac{1}{\sqrt{3}}$",
-    "なし": r"$\text{なし}$" # 「なし」に戻す
+    "なし": r"$\text{なし}$"
 }
 
 # -----------------------------------------------
@@ -54,7 +54,7 @@ sin_cos_options = [
 tan_options = [
     "0", "1", "√3", "1/√3",
     "-1", "-√3", "-1/√3",
-    "なし" # 「なし」を使用
+    "なし"
 ]
 
 # 有名角に対する正解辞書
@@ -105,7 +105,7 @@ def initialize_session_state():
         st.session_state.question_count = 0
         st.session_state.history = []
         st.session_state.show_result = False
-        st.session_state.start_time = time.time() # タイム計測開始
+        st.session_state.start_time = time.time()
         new_question()
 
 def check_answer_and_advance():
@@ -160,17 +160,23 @@ if st.session_state.show_result:
     
     st.subheader("全解答の確認")
     
-    # 添付ファイル (trig_quiz_choice_rad_app_on_web.py) に倣い、結果をLaTeX表で表示
-    latex_table = r"\def\arraystretch{2.5}\begin{array}{|c|c|c|c|c|} \hline 番号 & 問題 & あなたの解答 & 正解 & 正誤 \\ \hline "
+    # ✅ LaTeXのバックスラッシュを正しくエスケープして、表を正しくレンダリング
+    # f-stringを使うため、\を\\に、\\を\\\\にする必要がある
+    latex_table = "\\\\def\\\\arraystretch{2.5}\\\\begin{array}{|c|c|c|c|c|} \\\\hline 番号 & 問題 & あなたの解答 & 正解 & 正誤 \\\\hline "
     for i, item in enumerate(st.session_state.history, 1):
-        question_text = f"\{item['func']}\left({item['angle']}^\\circ\right)"
+        # 問題: \sin(30^\circ) の形式に
+        question_text = f"\\{item['func']}\\left({item['angle']}^\\circ\\right)" 
+        # ユーザー解答と正解は、latex_optionsからLaTeX形式を取得
         user_latex = latex_options.get(item['user_answer'], item['user_answer'])
         correct_latex = latex_options.get(item['correct_answer'], item['correct_answer'])
         
         mark = "○" if item['is_correct'] else "×"
         
-        latex_table += f"{i} & ${question_text}$ & {user_latex} & {correct_latex} & {mark} \\\\ \hline "
-    latex_table += r"\end{array}"
+        # \hline は \\hline にする必要がある
+        latex_table += f"{i} & ${question_text}$ & {user_latex} & {correct_latex} & {mark} \\\\ \\\\hline "
+    latex_table += "\\\\end{array}"
+    
+    # st.latexで表を表示
     st.latex(latex_table)
 
     if st.button("もう一度挑戦する"):
@@ -183,7 +189,7 @@ else:
     st.subheader(f"問題 {st.session_state.question_count + 1} / {MAX_QUESTIONS}")
     
     current_func = st.session_state.func
-    # 問題文も添付ファイルに倣って $ $ で囲む
+    # 問題文を $\sin(30^\circ)$ の形式で表示
     st.markdown(rf"$$ \{current_func}\left({st.session_state.angle}^\circ\right)\ の値は？ $$")
 
     # 選択肢の決定
@@ -196,7 +202,6 @@ else:
     cols = st.columns(4) 
     for i, key in enumerate(display_options):
         with cols[i % 4]:
-            # ボタンのキーを問題ごとにユニークにする
             button_key = f"option_{st.session_state.question_count}_{key}"
             if st.button(latex_options[key], use_container_width=True, key=button_key):
                 st.session_state.selected = key
