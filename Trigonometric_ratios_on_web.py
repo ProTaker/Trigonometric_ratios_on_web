@@ -19,14 +19,12 @@ div.stButton > button {
 </style>
 """, unsafe_allow_html=True)
 
-# 有名角（度数法）
+# 有名角、関数、選択肢などの定義（中略）
+# ...
 famous_angles = [-360, -330, -315, -300, -270, -240, -225, -210, -180, -150, -135, -120, -90, -60, -45, -30,
                  0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330, 360, 390, 405, 420, 450]
-
-# 出題対象の三角関数
 functions = ["sin", "cos", "tan"]
 
-# ✅ 選択肢（LaTeX表記できれいに）
 latex_options = {
     "0": r"$\displaystyle 0$",
     "1/2": r"$\displaystyle \frac{1}{2}$",
@@ -44,9 +42,6 @@ latex_options = {
     "なし": r"$\text{なし}$"
 }
 
-# -----------------------------------------------
-# 選択肢の分類
-# -----------------------------------------------
 sin_cos_options = [
     "0", "1/2", "√2/2", "√3/2", "1",
     "-1/2", "-√2/2", "-√3/2", "-1"
@@ -57,7 +52,6 @@ tan_options = [
     "なし"
 ]
 
-# 有名角に対する正解辞書 (中略)
 answers = {
     "sin": {
         -360: "0", -330: "1/2", -315: "√2/2", -300: "√3/2", -270: "1",
@@ -87,10 +81,9 @@ answers = {
         330: "-1/√3", 360: "0", 390: "1/√3", 405: "1", 420: "√3", 450: "なし"
     }
 }
-
 MAX_QUESTIONS = 10 
 
-# 新しい問題を作る関数 (中略)
+# 関数定義（中略）
 def new_question():
     st.session_state.func = random.choice(functions)
     st.session_state.angle = random.choice(famous_angles)
@@ -98,7 +91,6 @@ def new_question():
     st.session_state.result = ""
     st.session_state.show_result = False
 
-# セッションステートの初期化とリセット (中略)
 def initialize_session_state():
     if 'func' not in st.session_state:
         st.session_state.score = 0
@@ -119,7 +111,6 @@ def check_answer_and_advance():
     
     is_correct = (st.session_state.selected == correct)
     
-    # 履歴に保存 (中略)
     st.session_state.history.append({
         "func": current_func,
         "angle": current_angle,
@@ -133,7 +124,6 @@ def check_answer_and_advance():
 
     st.session_state.question_count += 1
     
-    # 問題数制限に達したら結果表示フラグを立てる (中略)
     if st.session_state.question_count >= MAX_QUESTIONS:
         st.session_state.show_result = True
     else:
@@ -141,14 +131,12 @@ def check_answer_and_advance():
     
     st.rerun()
 
-# 初期化実行
 initialize_session_state()
 
 # -----------------------------------------------
 # アプリの描画
 # -----------------------------------------------
 
-# 問題数が MAX_QUESTIONS に達しているかチェック
 if st.session_state.show_result:
     end_time = time.time()
     elapsed = Decimal(str(end_time - st.session_state.start_time)).quantize(Decimal('0.01'), ROUND_HALF_UP)
@@ -160,29 +148,26 @@ if st.session_state.show_result:
     
     st.subheader("全解答の確認")
     
-    # ✅ LaTeXの表をRaw Stringと文字列連結で構成
-    # \def は \\def、 \begin は \\begin、 \\ は \newline に相当
-    # 行末の \\\\ は、Pythonが \\ と解釈し、LaTeXで \\ となり、正しく改行される
-    
-    # 表のヘッダー部分をRaw Stringで定義
-    latex_table = r"\def\arraystretch{2.5}\begin{array}{|c|c|c|c|c|} \hline 番号 & 問題 & あなたの解答 & 正解 & 正誤 \\ \hline "
+    # ✅ 修正箇所: \def\arraystretch から \hline までは Raw String で固定
+    latex_content = r"\def\arraystretch{2.5}\begin{array}{|c|c|c|c|c|} \hline 番号 & 問題 & あなたの解答 & 正解 & 正誤 \\ \hline "
     
     for i, item in enumerate(st.session_state.history, 1):
-        # 問題: \sin\left(30^\circ\right) の形式に
+        # 問題: \sin\left(30^\circ\right) の形式。f-stringなので \ は \\ にエスケープ
         question_text = f"\\{item['func']}\\left({item['angle']}^\\circ\\right)" 
         user_latex = latex_options.get(item['user_answer'], item['user_answer'])
         correct_latex = latex_options.get(item['correct_answer'], item['correct_answer'])
         
         mark = "○" if item['is_correct'] else "×"
         
-        # 行の内容を追加。行末の改行 \\ と次の \hline を追加
-        latex_table += f"{i} & ${question_text}$ & {user_latex} & {correct_latex} & {mark} \\\\ \\hline "
+        # 行の終了 \\\\ は、Python f-stringが \\ と解釈し、LaTeXが改行 \\ と解釈するため正しい
+        # \hline は \\hline とすることで、LaTeXで \hline と解釈される
+        latex_content += f"{i} & ${question_text}$ & {user_latex} & {correct_latex} & {mark} \\\\ \\hline "
     
-    # 表のフッター部分を追加
-    latex_table += r"\end{array}"
+    # 表のフッター部分を Raw String で追加
+    latex_content += r"\end{array}"
     
     # st.latexで表を表示
-    st.latex(latex_table)
+    st.latex(latex_content)
 
     if st.button("もう一度挑戦する"):
         st.session_state.clear()
@@ -196,13 +181,11 @@ else:
     current_func = st.session_state.func
     st.markdown(rf"$$ \{current_func}\left({st.session_state.angle}^\circ\right)\ の値は？ $$")
 
-    # 選択肢の決定 (中略)
     if current_func in ["sin", "cos"]:
         display_options = sin_cos_options
     else:
         display_options = tan_options
 
-    # 選択肢ボタンの表示と処理 (中略)
     cols = st.columns(4) 
     for i, key in enumerate(display_options):
         with cols[i % 4]:
