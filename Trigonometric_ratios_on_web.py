@@ -7,7 +7,7 @@ import pandas as pd
 st.title("三角比クイズ（sin・cos・tan 有名角編）")
 
 # -----------------------------
-# CSS（列幅固定とセル内中央揃えの修正）
+# CSS（ボタンサイズ調整と列幅固定、中央揃え）
 # -----------------------------
 st.markdown("""
 <style>
@@ -21,52 +21,40 @@ div.stButton > button {
 .stTable, .stDataFrame {
     font-size: 18px; /* 全体フォントサイズ調整 */
 }
-
-/* テーブル全体の配置を中央に（維持） */
+/* テーブル全体の配置を中央に */
 .stTable {
     width: fit-content; 
     margin-left: auto;  
     margin-right: auto; 
 }
-
-/* ⭐︎⭐︎ 修正箇所: すべてのセルを中央揃えにする ⭐︎⭐︎ */
+/* すべてのセルを中央揃えにする */
 .stTable table th, .stTable table td {
-    white-space: nowrap; /* セル内の折り返しを禁止 */
-    /* !important を付けて強制的に中央揃えを適用 */
+    white-space: nowrap; 
     text-align: center !important; 
-    vertical-align: middle !important; /* 縦方向も中央に */
+    vertical-align: middle !important; 
 }
-
-/* 列幅固定の維持 (text-alignは上記で一括適用) */
-/* 1列目 (番号/インデックス) */
-.stTable table th:nth-child(1), .stTable table td:nth-child(1) {
-    width: 60px; 
-}
-/* 2列目 (問題) - 広い幅を確保 */
-.stTable table th:nth-child(2), .stTable table td:nth-child(2) {
-    min-width: 220px; 
-}
-/* 3列目 (あなたの解答) */
-.stTable table th:nth-child(3), .stTable table td:nth-child(3) {
-    min-width: 150px; 
-}
-/* 4列目 (正解) */
-.stTable table th:nth-child(4), .stTable table td:nth-child(4) {
-    min-width: 150px; 
-}
-/* 5列目 (正誤) - 狭い幅を固定 */
-.stTable table th:nth-child(5), .stTable table td:nth-child(5) {
-    width: 60px; 
-}
+/* 列幅固定の維持 */
+.stTable table th:nth-child(1), .stTable table td:nth-child(1) { width: 60px; }
+.stTable table th:nth-child(2), .stTable table td:nth-child(2) { min-width: 220px; }
+.stTable table th:nth-child(3), .stTable table td:nth-child(3) { min-width: 150px; }
+.stTable table th:nth-child(4), .stTable table td:nth-child(4) { min-width: 150px; }
+.stTable table th:nth-child(5), .stTable table td:nth-child(5) { width: 60px; }
 </style>
 """, unsafe_allow_html=True)
 
-# 有名角、関数、選択肢などの定義（中略）
-# ...
-famous_angles = [-360, -330, -315, -300, -270, -240, -225, -210, -180, -150, -135, -120, -90, -60, -45, -30,
-                 0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330, 360, 390, 405, 420, 450]
+# -----------------------------
+# 角度範囲の定義
+# -----------------------------
+ANGLE_RANGES = {
+    "0~90": [0, 30, 45, 60, 90],
+    "0~180": [0, 30, 45, 60, 90, 120, 135, 150, 180],
+    "ALL": [-360, -330, -315, -300, -270, -240, -225, -210, -180, -150, -135, -120, -90, -60, -45, -30,
+            0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330, 360, 390, 405, 420, 450]
+}
 functions = ["sin", "cos", "tan"]
 
+# 選択肢、正解の定義 (変更なし、中略)
+# ...
 latex_options = {
     "0": r"$\displaystyle 0$",
     "1/2": r"$\displaystyle \frac{1}{2}$",
@@ -125,16 +113,21 @@ answers = {
 }
 MAX_QUESTIONS = 10 
 
-# 関数定義（中略）
+# 関数定義
 def new_question():
     st.session_state.func = random.choice(functions)
-    st.session_state.angle = random.choice(famous_angles)
+    # ⭐︎ 選択された範囲から角度を選ぶように修正 ⭐︎
+    st.session_state.angle = random.choice(ANGLE_RANGES[st.session_state.angle_range])
     st.session_state.selected = None
     st.session_state.result = ""
     st.session_state.show_result = False
 
 def initialize_session_state():
-    if 'func' not in st.session_state:
+    if 'range_selected' not in st.session_state:
+        st.session_state.range_selected = False  # ⭐︎ 範囲選択状態を追加 ⭐︎
+        st.session_state.angle_range = "ALL"
+    
+    if 'func' not in st.session_state and st.session_state.range_selected:
         st.session_state.score = 0
         st.session_state.question_count = 0
         st.session_state.history = []
@@ -143,6 +136,7 @@ def initialize_session_state():
         new_question()
 
 def check_answer_and_advance():
+    # ... (中略)
     if st.session_state.selected is None:
         st.session_state.result = "選択肢を選んでください。"
         return
@@ -179,7 +173,32 @@ initialize_session_state()
 # アプリの描画
 # -----------------------------------------------
 
-if st.session_state.show_result:
+if not st.session_state.range_selected:
+    # ⭐︎ 範囲選択画面 ⭐︎
+    st.header("出題範囲を選択してください")
+    
+    range_cols = st.columns(3)
+    
+    if range_cols[0].button(r"$0^\circ \sim 90^\circ$", use_container_width=True):
+        st.session_state.angle_range = "0~90"
+        st.session_state.range_selected = True
+        initialize_session_state()
+        st.rerun()
+        
+    if range_cols[1].button(r"$0^\circ \sim 180^\circ$", use_container_width=True):
+        st.session_state.angle_range = "0~180"
+        st.session_state.range_selected = True
+        initialize_session_state()
+        st.rerun()
+
+    if range_cols[2].button(r"$-360^\circ \sim 450^\circ$", use_container_width=True):
+        st.session_state.angle_range = "ALL"
+        st.session_state.range_selected = True
+        initialize_session_state()
+        st.rerun()
+
+elif st.session_state.show_result:
+    # 結果表示 (変更なし、中略)
     end_time = time.time()
     elapsed = Decimal(str(end_time - st.session_state.start_time)).quantize(Decimal('0.01'), ROUND_HALF_UP)
     
@@ -190,10 +209,8 @@ if st.session_state.show_result:
     
     st.subheader("全解答の確認")
     
-    # DataFrame生成
     table_data = []
     for i, item in enumerate(st.session_state.history, 1):
-        # 結果表の表示は、\text{} を使って正しく表示
         if item['angle'] < 0:
             func_disp = rf"$\text{{{item['func']}}}\left({item['angle']}^\circ\right)$"
         else:
@@ -212,8 +229,6 @@ if st.session_state.show_result:
         })
 
     df = pd.DataFrame(table_data)
-
-    # st.tableで表示（CSSで列幅を固定し、テーブル全体を中央揃え）
     st.table(df.set_index("番号"))
     
 
@@ -223,13 +238,12 @@ if st.session_state.show_result:
         st.rerun()
     
 else:
-    # 問題の表示 (クイズ中の問題文表示)
+    # クイズ本体 (変更なし)
     st.subheader(f"問題 {st.session_state.question_count + 1} / {MAX_QUESTIONS}")
     
     current_func = st.session_state.func
     current_angle = st.session_state.angle
     
-    # \sin, \cosなどの標準的な\LaTeXコマンドで表示
     if current_angle < 0:
         question_latex = rf"$$ \{current_func}\left({current_angle}^\circ\right)\ の値は？ $$"
     else:
