@@ -149,25 +149,29 @@ if st.session_state.show_result:
     st.subheader("全解答の確認")
     
     # ✅ 修正箇所: \def\arraystretch から \hline までは Raw String で固定
-    latex_content = r"\def\arraystretch{2.5}\begin{array}{|c|c|c|c|c|} \hline 番号 & 問題 & あなたの解答 & 正解 & 正誤 \\ \hline "
     
+    # 表データを作成
+    table_data = []
     for i, item in enumerate(st.session_state.history, 1):
-        # 問題: \sin\left(30^\circ\right) の形式。f-stringなので \ は \\ にエスケープ
-        question_text = f"\\{item['func']}\\left({item['angle']}^\\circ\\right)" 
-        user_latex = latex_options.get(item['user_answer'], item['user_answer'])
-        correct_latex = latex_options.get(item['correct_answer'], item['correct_answer'])
-        
+        func_disp = f"{item['func']}({item['angle']}°)"
+        user_disp = latex_options.get(item['user_answer'], item['user_answer'])
+        correct_disp = latex_options.get(item['correct_answer'], item['correct_answer'])
         mark = "○" if item['is_correct'] else "×"
-        
-        # 行の終了 \\\\ は、Python f-stringが \\ と解釈し、LaTeXが改行 \\ と解釈するため正しい
-        # \hline は \\hline とすることで、LaTeXで \hline と解釈される
-        latex_content += f"{i} & ${question_text}$ & {user_latex} & {correct_latex} & {mark} \\\\ \\hline "
+
+        table_data.append({
+            "番号": i,
+            "問題": func_disp,
+            "あなたの解答": user_disp,
+            "正解": correct_disp,
+            "正誤": mark
+        })
+
+    import pandas as pd
+    df = pd.DataFrame(table_data)
+
+    # 見やすい表として表示
+    st.table(df)
     
-    # 表のフッター部分を Raw String で追加
-    latex_content += r"\end{array}"
-    
-    # st.latexで表を表示
-    st.latex(latex_content)
 
     if st.button("もう一度挑戦する"):
         st.session_state.clear()
