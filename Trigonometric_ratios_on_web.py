@@ -2,12 +2,12 @@ import streamlit as st
 import random
 import time
 from decimal import Decimal, ROUND_HALF_UP
-import pandas as pd # 👈 追加: 結果表示にPandasを使用
+import pandas as pd 
 
 st.title("三角比クイズ（sin・cos・tan 有名角編）")
 
 # -----------------------------
-# CSS（ボタンサイズ調整）
+# CSS（ボタンサイズ調整と列幅固定）
 # -----------------------------
 st.markdown("""
 <style>
@@ -20,6 +20,31 @@ div.stButton > button {
 /* st.table/st.dataframe のセル内の数式表示を調整 */
 .stTable, .stDataFrame {
     font-size: 18px; /* 全体フォントサイズ調整 */
+}
+
+/* ⭐︎ 列幅固定の維持 ⭐︎ */
+.stTable table th, .stTable table td {
+    white-space: nowrap; /* セル内の折り返しを禁止 */
+}
+/* 1列目 (番号/インデックス) */
+.stTable table th:nth-child(1), .stTable table td:nth-child(1) {
+    width: 60px; 
+}
+/* 2列目 (問題) - 広い幅を確保 */
+.stTable table th:nth-child(2), .stTable table td:nth-child(2) {
+    min-width: 220px; 
+}
+/* 3列目 (あなたの解答) */
+.stTable table th:nth-child(3), .stTable table td:nth-child(3) {
+    min-width: 150px; 
+}
+/* 4列目 (正解) */
+.stTable table th:nth-child(4), .stTable table td:nth-child(4) {
+    min-width: 150px; 
+}
+/* 5列目 (正誤) - 狭い幅を固定 */
+.stTable table th:nth-child(5), .stTable table td:nth-child(5) {
+    width: 60px; 
 }
 </style>
 """, unsafe_allow_html=True)
@@ -153,14 +178,14 @@ if st.session_state.show_result:
     
     st.subheader("全解答の確認")
     
-    # ✅ 修正箇所：Pandas DataFrameとst.table()で安定表示
+    # DataFrame生成（結果表の表示は維持）
     table_data = []
     for i, item in enumerate(st.session_state.history, 1):
-        # 問題表示の調整（マイナス角にのみ括弧をつける）
+        # ✅ 結果表の表示は、\text{} を使って正しく表示（維持）
         if item['angle'] < 0:
-            func_disp = rf"$\text{{}}{item['func']}\left({item['angle']}^\circ\right)$"
+            func_disp = rf"$\text{{{item['func']}}}\left({item['angle']}^\circ\right)$"
         else:
-            func_disp = rf"$\text{{}}{item['func']} {item['angle']}^\circ$"
+            func_disp = rf"$\text{{{item['func']}}} {item['angle']}^\circ$"
             
         user_disp = latex_options.get(item['user_answer'], item['user_answer'])
         correct_disp = latex_options.get(item['correct_answer'], item['correct_answer'])
@@ -176,7 +201,7 @@ if st.session_state.show_result:
 
     df = pd.DataFrame(table_data)
 
-    # st.tableで表示（安定性が高い）
+    # st.tableで表示（CSSで列幅を固定）
     st.table(df.set_index("番号"))
     
 
@@ -186,13 +211,13 @@ if st.session_state.show_result:
         st.rerun()
     
 else:
-    # 問題の表示
+    # 問題の表示 (クイズ中の問題文表示を修正)
     st.subheader(f"問題 {st.session_state.question_count + 1} / {MAX_QUESTIONS}")
     
     current_func = st.session_state.func
     current_angle = st.session_state.angle
     
-    # ✅ 修正箇所: マイナスの角度のときのみ括弧をつける
+    # ✅ 修正箇所: \text{} を削除し、\sin, \cosなどの標準的な\LaTeXコマンドに戻す
     if current_angle < 0:
         question_latex = rf"$$ \{current_func}\left({current_angle}^\circ\right)\ の値は？ $$"
     else:
