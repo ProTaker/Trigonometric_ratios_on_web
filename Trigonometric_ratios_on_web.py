@@ -109,6 +109,7 @@ def initialize_session_state():
         new_question()
 
 def check_answer_and_advance():
+    # 選択されていない場合はエラーメッセージを表示し、rerunしない
     if st.session_state.selected is None:
         st.session_state.result = "選択肢を選んでください。"
         return
@@ -139,6 +140,7 @@ def check_answer_and_advance():
     else:
         new_question()
     
+    # 選択肢が押されたら、ここで強制的に画面を更新し、次の問題へ遷移させる
     st.rerun()
 
 # 初期化実行
@@ -146,73 +148,4 @@ initialize_session_state()
 
 # -----------------------------------------------
 # アプリの描画
-# -----------------------------------------------
-
-# 問題数が MAX_QUESTIONS に達しているかチェック
-if st.session_state.show_result:
-    end_time = time.time()
-    elapsed = Decimal(str(end_time - st.session_state.start_time)).quantize(Decimal('0.01'), ROUND_HALF_UP)
-    
-    st.header("✨ クイズ終了！ 結果発表 ✨")
-    st.markdown(f"**あなたのスコア: {st.session_state.score} / {MAX_QUESTIONS} 問正解**")
-    st.write(f"**経過時間: {elapsed} 秒**")
-    st.divider()
-    
-    st.subheader("全解答の確認")
-    
-    # ✅ LaTeXのバックスラッシュを正しくエスケープして、表を正しくレンダリング
-    # f-stringを使うため、\を\\に、\\を\\\\にする必要がある
-    latex_table = "\\\\def\\\\arraystretch{2.5}\\\\begin{array}{|c|c|c|c|c|} \\\\hline 番号 & 問題 & あなたの解答 & 正解 & 正誤 \\\\hline "
-    for i, item in enumerate(st.session_state.history, 1):
-        # 問題: \sin(30^\circ) の形式に
-        question_text = f"\\{item['func']}\\left({item['angle']}^\\circ\\right)" 
-        # ユーザー解答と正解は、latex_optionsからLaTeX形式を取得
-        user_latex = latex_options.get(item['user_answer'], item['user_answer'])
-        correct_latex = latex_options.get(item['correct_answer'], item['correct_answer'])
-        
-        mark = "○" if item['is_correct'] else "×"
-        
-        # \hline は \\hline にする必要がある
-        latex_table += f"{i} & ${question_text}$ & {user_latex} & {correct_latex} & {mark} \\\\ \\\\hline "
-    latex_table += "\\\\end{array}"
-    
-    # st.latexで表を表示
-    st.latex(latex_table)
-
-    if st.button("もう一度挑戦する"):
-        st.session_state.clear()
-        initialize_session_state()
-        st.rerun()
-    
-else:
-    # 問題の表示
-    st.subheader(f"問題 {st.session_state.question_count + 1} / {MAX_QUESTIONS}")
-    
-    current_func = st.session_state.func
-    # 問題文を $\sin(30^\circ)$ の形式で表示
-    st.markdown(rf"$$ \{current_func}\left({st.session_state.angle}^\circ\right)\ の値は？ $$")
-
-    # 選択肢の決定
-    if current_func in ["sin", "cos"]:
-        display_options = sin_cos_options
-    else:
-        display_options = tan_options
-
-    # 選択肢ボタンの表示と処理
-    cols = st.columns(4) 
-    for i, key in enumerate(display_options):
-        with cols[i % 4]:
-            button_key = f"option_{st.session_state.question_count}_{key}"
-            if st.button(latex_options[key], use_container_width=True, key=button_key):
-                st.session_state.selected = key
-                st.session_state.result = f"選択中: {latex_options[key]}"
-
-    # 結果表示（選択中の答えを示すために利用）
-    if st.session_state.selected:
-        st.markdown(st.session_state.result)
-    else:
-        st.markdown("---")
-    
-    # 次の問題ボタン（回答確定と次の問題への遷移を兼ねる）
-    if st.button("解答を確定し、次の問題へ"):
-        check_answer_and_advance()
+# ----------------
