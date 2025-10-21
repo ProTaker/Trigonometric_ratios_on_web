@@ -109,8 +109,6 @@ cols = st.columns(4)
 for i, key in enumerate(display_options):
     with cols[i % 4]:
         # use_container_width=True で横幅を揃える
-        # Streamlitのネイティブ機能では縦横統一は困難ですが、これ以上大きな分数表記がないため、
-        # 縦幅の差は最小限に抑えられます。
         if st.button(latex_options[key], use_container_width=True, key=key):
             st.session_state.selected = key
             st.session_state.result = "" # 選択したら結果をリセット
@@ -134,5 +132,5 @@ st.markdown(st.session_state.result)
 # 次の問題ボタン
 if st.button("次の問題"):
     new_question()
-    # Streamlitの再実行を促し、画面を更新
-    st.experimental_rerun()
+    # Streamlitの再実行関数をst.rerun()に修正
+    st.rerun()
