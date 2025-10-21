@@ -1,3 +1,142 @@
+import streamlit as st
+import random
+import time
+from decimal import Decimal, ROUND_HALF_UP
+
+st.title("三角比クイズ（sin・cos・tan 有名角編）")
+
+# -----------------------------
+# CSS（ボタンサイズ調整）
+# -----------------------------
+st.markdown("""
+<style>
+/* 選択肢ボタンのサイズとフォントを統一 */
+div.stButton > button {
+    width: 160px !important;
+    height: 70px !important;
+    font-size: 22px;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# 有名角、関数、選択肢などの定義（中略）
+# ...
+famous_angles = [-360, -330, -315, -300, -270, -240, -225, -210, -180, -150, -135, -120, -90, -60, -45, -30,
+                 0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330, 360, 390, 405, 420, 450]
+functions = ["sin", "cos", "tan"]
+
+latex_options = {
+    "0": r"$\displaystyle 0$",
+    "1/2": r"$\displaystyle \frac{1}{2}$",
+    "√2/2": r"$\displaystyle \frac{\sqrt{2}}{2}$",
+    "√3/2": r"$\displaystyle \frac{\sqrt{3}}{2}$",
+    "1": r"$\displaystyle 1$",
+    "-1/2": r"$\displaystyle -\frac{1}{2}$",
+    "-√2/2": r"$\displaystyle -\frac{\sqrt{2}}{2}$",
+    "-√3/2": r"$\displaystyle -\frac{\sqrt{3}}{2}$",
+    "-1": r"$\displaystyle -1$",
+    "√3": r"$\displaystyle \sqrt{3}$",
+    "-√3": r"$\displaystyle -\sqrt{3}$",
+    "1/√3": r"$\displaystyle \frac{1}{\sqrt{3}}$",
+    "-1/√3": r"$\displaystyle -\frac{1}{\sqrt{3}}$",
+    "なし": r"$\text{なし}$"
+}
+
+sin_cos_options = [
+    "0", "1/2", "√2/2", "√3/2", "1",
+    "-1/2", "-√2/2", "-√3/2", "-1"
+]
+tan_options = [
+    "0", "1", "√3", "1/√3",
+    "-1", "-√3", "-1/√3",
+    "なし"
+]
+
+answers = {
+    "sin": {
+        -360: "0", -330: "1/2", -315: "√2/2", -300: "√3/2", -270: "1",
+        -240: "√3/2", -225: "√2/2", -210: "1/2", -180: "0", -150: "-1/2",
+        -135: "-√2/2", -120: "-√3/2", -90: "-1", -60: "-√3/2", -45: "-√2/2",
+        -30: "-1/2", 0: "0", 30: "1/2", 45: "√2/2", 60: "√3/2", 90: "1",
+        120: "√3/2", 135: "√2/2", 150: "1/2", 180: "0", 210: "-1/2",
+        225: "-√2/2", 240: "-√3/2", 270: "-1", 300: "-√3/2", 315: "-√2/2",
+        330: "-1/2", 360: "0", 390: "1/2", 405: "√2/2", 420: "√3/2", 450: "1"
+    },
+    "cos": {
+        -360: "1", -330: "√3/2", -315: "√2/2", -300: "1/2", -270: "0",
+        -240: "-1/2", -225: "-√2/2", -210: "-√3/2", -180: "-1", -150: "-√3/2",
+        -135: "-√2/2", -120: "-1/2", -90: "0", -60: "1/2", -45: "√2/2",
+        -30: "√3/2", 0: "1", 30: "√3/2", 45: "√2/2", 60: "1/2", 90: "0",
+        120: "-1/2", 135: "-√2/2", 150: "-√3/2", 180: "-1", 210: "-√3/2",
+        225: "-√2/2", 240: "-1/2", 270: "0", 300: "1/2", 315: "√2/2",
+        330: "√3/2", 360: "1", 390: "√3/2", 405: "√2/2", 420: "1/2", 450: "0"
+    },
+    "tan": {
+        -360: "0", -330: "1/√3", -315: "1", -300: "√3", -270: "なし",
+        -240: "√3", -225: "1", -210: "1/√3", -180: "0", -150: "-1/√3",
+        -135: "-1", -120: "-√3", -90: "なし", -60: "-√3", -45: "-1",
+        -30: "-1/√3", 0: "0", 30: "1/√3", 45: "1", 60: "√3", 90: "なし",
+        120: "-√3", 135: "-1", 150: "-1/√3", 180: "0", 210: "1/√3",
+        225: "1", 240: "√3", 270: "なし", 300: "-√3", 315: "-1",
+        330: "-1/√3", 360: "0", 390: "1/√3", 405: "1", 420: "√3", 450: "なし"
+    }
+}
+MAX_QUESTIONS = 10 
+
+# 関数定義（中略）
+def new_question():
+    st.session_state.func = random.choice(functions)
+    st.session_state.angle = random.choice(famous_angles)
+    st.session_state.selected = None
+    st.session_state.result = ""
+    st.session_state.show_result = False
+
+def initialize_session_state():
+    if 'func' not in st.session_state:
+        st.session_state.score = 0
+        st.session_state.question_count = 0
+        st.session_state.history = []
+        st.session_state.show_result = False
+        st.session_state.start_time = time.time()
+        new_question()
+
+def check_answer_and_advance():
+    if st.session_state.selected is None:
+        st.session_state.result = "選択肢を選んでください。"
+        return
+
+    current_func = st.session_state.func
+    current_angle = st.session_state.angle
+    correct = answers[current_func][current_angle]
+    
+    is_correct = (st.session_state.selected == correct)
+    
+    st.session_state.history.append({
+        "func": current_func,
+        "angle": current_angle,
+        "user_answer": st.session_state.selected,
+        "correct_answer": correct,
+        "is_correct": is_correct
+    })
+
+    if is_correct:
+        st.session_state.score += 1
+
+    st.session_state.question_count += 1
+    
+    if st.session_state.question_count >= MAX_QUESTIONS:
+        st.session_state.show_result = True
+    else:
+        new_question()
+    
+    st.rerun()
+
+initialize_session_state()
+
+# -----------------------------------------------
+# アプリの描画
+# -----------------------------------------------
+
 if st.session_state.show_result:
     end_time = time.time()
     elapsed = Decimal(str(end_time - st.session_state.start_time)).quantize(Decimal('0.01'), ROUND_HALF_UP)
@@ -8,60 +147,51 @@ if st.session_state.show_result:
     st.divider()
     
     st.subheader("全解答の確認")
-
-    # HTMLテーブル生成
-    table_html = """
-    <style>
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            text-align: center;
-            font-size: 16px;
-        }
-        th, td {
-            border: 1px solid #999;
-            padding: 8px;
-        }
-        th {
-            background-color: #f0f0f0;
-        }
-        .correct { color: green; font-weight: bold; }
-        .wrong { color: red; font-weight: bold; }
-    </style>
-    <table>
-        <tr>
-            <th>番号</th>
-            <th>問題</th>
-            <th>あなたの解答</th>
-            <th>正解</th>
-            <th>正誤</th>
-        </tr>
-    """
-
+    
+    # ✅ 修正箇所: \def\arraystretch から \hline までは Raw String で固定
+    latex_content = r"\def\arraystretch{2.5}\begin{array}{|c|c|c|c|c|} \hline 番号 & 問題 & あなたの解答 & 正解 & 正誤 \\ \hline "
+    
     for i, item in enumerate(st.session_state.history, 1):
-        question_text = f"\\({item['func']}({item['angle']}^\\circ)\\)"
+        # 問題: \sin\left(30^\circ\right) の形式。f-stringなので \ は \\ にエスケープ
+        question_text = f"\\{item['func']}\\left({item['angle']}^\\circ\\right)" 
         user_latex = latex_options.get(item['user_answer'], item['user_answer'])
         correct_latex = latex_options.get(item['correct_answer'], item['correct_answer'])
-        mark = "○" if item['is_correct'] else "×"
-        mark_class = "correct" if item['is_correct'] else "wrong"
         
-        row_html = f"""
-        <tr>
-            <td>{i}</td>
-            <td>{question_text}</td>
-            <td>\\({user_latex}\\)</td>
-            <td>\\({correct_latex}\\)</td>
-            <td class="{mark_class}">{mark}</td>
-        </tr>
-        """
-        table_html += row_html
-
-    table_html += "</table>"
-
-    # 表示（LaTeXも有効化）
-    st.markdown(table_html, unsafe_allow_html=True)
+        mark = "○" if item['is_correct'] else "×"
+        
+        # 行の終了 \\\\ は、Python f-stringが \\ と解釈し、LaTeXが改行 \\ と解釈するため正しい
+        # \hline は \\hline とすることで、LaTeXで \hline と解釈される
+        latex_content += f"{i} & ${question_text}$ & {user_latex} & {correct_latex} & {mark} \\\\ \\hline "
+    
+    # 表のフッター部分を Raw String で追加
+    latex_content += r"\end{array}"
+    
+    # st.latexで表を表示
+    st.latex(latex_content)
 
     if st.button("もう一度挑戦する"):
         st.session_state.clear()
         initialize_session_state()
         st.rerun()
+    
+else:
+    # 問題の表示 (中略)
+    st.subheader(f"問題 {st.session_state.question_count + 1} / {MAX_QUESTIONS}")
+    
+    current_func = st.session_state.func
+    st.markdown(rf"$$ \{current_func}\left({st.session_state.angle}^\circ\right)\ の値は？ $$")
+
+    if current_func in ["sin", "cos"]:
+        display_options = sin_cos_options
+    else:
+        display_options = tan_options
+
+    cols = st.columns(4) 
+    for i, key in enumerate(display_options):
+        with cols[i % 4]:
+            button_key = f"option_{st.session_state.question_count}_{key}"
+            if st.button(latex_options[key], use_container_width=True, key=button_key):
+                st.session_state.selected = key
+                check_answer_and_advance() 
+    
+    st.markdown("---")
