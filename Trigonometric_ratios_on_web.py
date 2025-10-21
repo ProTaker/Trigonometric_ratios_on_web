@@ -234,7 +234,7 @@ elif st.session_state.show_result:
         if item['angle'] < 0:
             func_disp = rf"$\text{{{item['func']}}}\left({item['angle']}^\circ\right)$"
         else:
-            func_disp = rf"$\text{{{item['func']}}}" " {item['angle']}^\circ$"
+            func_disp = rf"$\text{{{item['func']}}}  {item['angle']}^\circ$"
             
         user_disp = latex_options.get(item['user_answer'], item['user_answer'])
         correct_disp = latex_options.get(item['correct_answer'], item['correct_answer'])
