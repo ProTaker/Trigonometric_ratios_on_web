@@ -6,7 +6,7 @@ from decimal import Decimal, ROUND_HALF_UP
 st.title("三角比クイズ（sin・cos・tan 有名角編）")
 
 # -----------------------------
-# ✅ CSS（ボタンサイズ調整と結果表のカスタムスタイルを追加）
+# CSS（ボタンサイズ調整）
 # -----------------------------
 st.markdown("""
 <style>
@@ -15,36 +15,6 @@ div.stButton > button {
     width: 160px !important;
     height: 70px !important;
     font-size: 22px;
-}
-
-/* 結果表のカスタムスタイル */
-.result-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-}
-.result-table th, .result-table td {
-    border: 1px solid #ccc;
-    padding: 10px 5px;
-    text-align: center;
-    font-size: 16px;
-}
-.result-table th {
-    background-color: #f0f2f6;
-}
-.result-table td:nth-child(2) { /* 問題の列 */
-    font-size: 20px;
-}
-.result-table td:nth-child(3), .result-table td:nth-child(4) { /* 解答の列 (LaTeX) */
-    font-size: 20px;
-}
-.result-table .correct {
-    color: green;
-    font-weight: bold;
-}
-.result-table .incorrect {
-    color: red;
-    font-weight: bold;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -75,7 +45,7 @@ latex_options = {
 }
 
 # -----------------------------------------------
-# 選択肢の分類（sin/cos 用と tan 用）
+# 選択肢の分類
 # -----------------------------------------------
 sin_cos_options = [
     "0", "1/2", "√2/2", "√3/2", "1",
@@ -87,7 +57,7 @@ tan_options = [
     "なし"
 ]
 
-# 有名角に対する正解辞書 (変更なし)
+# 有名角に対する正解辞書 (中略)
 answers = {
     "sin": {
         -360: "0", -330: "1/2", -315: "√2/2", -300: "√3/2", -270: "1",
@@ -120,7 +90,7 @@ answers = {
 
 MAX_QUESTIONS = 10 
 
-# 新しい問題を作る関数
+# 新しい問題を作る関数 (中略)
 def new_question():
     st.session_state.func = random.choice(functions)
     st.session_state.angle = random.choice(famous_angles)
@@ -128,7 +98,7 @@ def new_question():
     st.session_state.result = ""
     st.session_state.show_result = False
 
-# セッションステートの初期化とリセット
+# セッションステートの初期化とリセット (中略)
 def initialize_session_state():
     if 'func' not in st.session_state:
         st.session_state.score = 0
@@ -149,7 +119,7 @@ def check_answer_and_advance():
     
     is_correct = (st.session_state.selected == correct)
     
-    # 履歴に保存
+    # 履歴に保存 (中略)
     st.session_state.history.append({
         "func": current_func,
         "angle": current_angle,
@@ -163,7 +133,7 @@ def check_answer_and_advance():
 
     st.session_state.question_count += 1
     
-    # 問題数制限に達したら結果表示フラグを立てる
+    # 問題数制限に達したら結果表示フラグを立てる (中略)
     if st.session_state.question_count >= MAX_QUESTIONS:
         st.session_state.show_result = True
     else:
@@ -190,45 +160,29 @@ if st.session_state.show_result:
     
     st.subheader("全解答の確認")
     
-    # ✅ st.markdownとHTMLで結果表を構築（LaTeXコマンドをHTMLに直接埋め込む）
-    table_html = """
-    <table class="result-table">
-        <thead>
-            <tr>
-                <th>番号</th>
-                <th>問題</th>
-                <th>あなたの解答</th>
-                <th>正解</th>
-                <th>正誤</th>
-            </tr>
-        </thead>
-        <tbody>
-    """
+    # ✅ LaTeXの表をRaw Stringと文字列連結で構成
+    # \def は \\def、 \begin は \\begin、 \\ は \newline に相当
+    # 行末の \\\\ は、Pythonが \\ と解釈し、LaTeXで \\ となり、正しく改行される
+    
+    # 表のヘッダー部分をRaw Stringで定義
+    latex_table = r"\def\arraystretch{2.5}\begin{array}{|c|c|c|c|c|} \hline 番号 & 問題 & あなたの解答 & 正解 & 正誤 \\ \hline "
     
     for i, item in enumerate(st.session_state.history, 1):
-        # 問題文: LaTeX形式
-        question_text = f"$\\{item['func']}\\left({item['angle']}^\\circ\\right)$" 
-        # 解答: LaTeX形式
+        # 問題: \sin\left(30^\circ\right) の形式に
+        question_text = f"\\{item['func']}\\left({item['angle']}^\\circ\\right)" 
         user_latex = latex_options.get(item['user_answer'], item['user_answer'])
         correct_latex = latex_options.get(item['correct_answer'], item['correct_answer'])
         
         mark = "○" if item['is_correct'] else "×"
-        mark_class = "correct" if item['is_correct'] else "incorrect"
         
-        table_html += f"""
-            <tr>
-                <td>{i}</td>
-                <td>{question_text}</td>
-                <td>{user_latex}</td>
-                <td>{correct_latex}</td>
-                <td class="{mark_class}">{mark}</td>
-            </tr>
-        """
-        
-    table_html += "</tbody></table>"
+        # 行の内容を追加。行末の改行 \\ と次の \hline を追加
+        latex_table += f"{i} & ${question_text}$ & {user_latex} & {correct_latex} & {mark} \\\\ \\hline "
     
-    # HTMLとしてレンダリング
-    st.markdown(table_html, unsafe_allow_html=True)
+    # 表のフッター部分を追加
+    latex_table += r"\end{array}"
+    
+    # st.latexで表を表示
+    st.latex(latex_table)
 
     if st.button("もう一度挑戦する"):
         st.session_state.clear()
@@ -236,24 +190,23 @@ if st.session_state.show_result:
         st.rerun()
     
 else:
-    # 問題の表示
+    # 問題の表示 (中略)
     st.subheader(f"問題 {st.session_state.question_count + 1} / {MAX_QUESTIONS}")
     
     current_func = st.session_state.func
     st.markdown(rf"$$ \{current_func}\left({st.session_state.angle}^\circ\right)\ の値は？ $$")
 
-    # 選択肢の決定
+    # 選択肢の決定 (中略)
     if current_func in ["sin", "cos"]:
         display_options = sin_cos_options
     else:
         display_options = tan_options
 
-    # 選択肢ボタンの表示と処理
+    # 選択肢ボタンの表示と処理 (中略)
     cols = st.columns(4) 
     for i, key in enumerate(display_options):
         with cols[i % 4]:
             button_key = f"option_{st.session_state.question_count}_{key}"
-            # ボタンが押されたら、選択を確定し、即座に次の問題へ遷移
             if st.button(latex_options[key], use_container_width=True, key=button_key):
                 st.session_state.selected = key
                 check_answer_and_advance() 
