@@ -7,7 +7,7 @@ import pandas as pd
 st.title("三角比クイズ（sin・cos・tan 有名角編）")
 
 # -----------------------------
-# CSS（ボタンサイズ調整と列幅固定）
+# CSS（ボタンサイズ調整と列幅固定、中央揃えの追加）
 # -----------------------------
 st.markdown("""
 <style>
@@ -22,9 +22,18 @@ div.stButton > button {
     font-size: 18px; /* 全体フォントサイズ調整 */
 }
 
-/* ⭐︎ 列幅固定の維持 ⭐︎ */
+/* ⭐︎⭐︎ 修正箇所: st.tableを中央揃えにするCSSを追加 ⭐︎⭐︎ */
+/* st.tableのコンテナ要素を特定し、中央揃えを適用 */
+.stTable {
+    width: fit-content; /* テーブルの幅を内容に合わせる */
+    margin-left: auto;  /* 左側のマージンを自動調整 */
+    margin-right: auto; /* 右側のマージンを自動調整 */
+}
+
+/* 列幅固定の維持 */
 .stTable table th, .stTable table td {
     white-space: nowrap; /* セル内の折り返しを禁止 */
+    text-align: center; /* セル内のテキストも中央揃えにする */
 }
 /* 1列目 (番号/インデックス) */
 .stTable table th:nth-child(1), .stTable table td:nth-child(1) {
@@ -178,10 +187,10 @@ if st.session_state.show_result:
     
     st.subheader("全解答の確認")
     
-    # DataFrame生成（結果表の表示は維持）
+    # DataFrame生成
     table_data = []
     for i, item in enumerate(st.session_state.history, 1):
-        # ✅ 結果表の表示は、\text{} を使って正しく表示（維持）
+        # 結果表の表示は、\text{} を使って正しく表示
         if item['angle'] < 0:
             func_disp = rf"$\text{{{item['func']}}}\left({item['angle']}^\circ\right)$"
         else:
@@ -201,7 +210,7 @@ if st.session_state.show_result:
 
     df = pd.DataFrame(table_data)
 
-    # st.tableで表示（CSSで列幅を固定）
+    # st.tableで表示（CSSで列幅を固定し、テーブル全体を中央揃え）
     st.table(df.set_index("番号"))
     
 
@@ -211,13 +220,13 @@ if st.session_state.show_result:
         st.rerun()
     
 else:
-    # 問題の表示 (クイズ中の問題文表示を修正)
+    # 問題の表示 (クイズ中の問題文表示)
     st.subheader(f"問題 {st.session_state.question_count + 1} / {MAX_QUESTIONS}")
     
     current_func = st.session_state.func
     current_angle = st.session_state.angle
     
-    # ✅ 修正箇所: \text{} を削除し、\sin, \cosなどの標準的な\LaTeXコマンドに戻す
+    # \sin, \cosなどの標準的な\LaTeXコマンドで表示
     if current_angle < 0:
         question_latex = rf"$$ \{current_func}\left({current_angle}^\circ\right)\ の値は？ $$"
     else:
