@@ -6,7 +6,7 @@ from decimal import Decimal, ROUND_HALF_UP
 st.title("三角比クイズ（sin・cos・tan 有名角編）")
 
 # -----------------------------
-# ✅ CSS（ボタンサイズ調整）
+# ✅ CSS（ボタンサイズ調整と結果表のカスタムスタイルを追加）
 # -----------------------------
 st.markdown("""
 <style>
@@ -15,6 +15,36 @@ div.stButton > button {
     width: 160px !important;
     height: 70px !important;
     font-size: 22px;
+}
+
+/* 結果表のカスタムスタイル */
+.result-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+.result-table th, .result-table td {
+    border: 1px solid #ccc;
+    padding: 10px 5px;
+    text-align: center;
+    font-size: 16px;
+}
+.result-table th {
+    background-color: #f0f2f6;
+}
+.result-table td:nth-child(2) { /* 問題の列 */
+    font-size: 20px;
+}
+.result-table td:nth-child(3), .result-table td:nth-child(4) { /* 解答の列 (LaTeX) */
+    font-size: 20px;
+}
+.result-table .correct {
+    color: green;
+    font-weight: bold;
+}
+.result-table .incorrect {
+    color: red;
+    font-weight: bold;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -57,7 +87,7 @@ tan_options = [
     "なし"
 ]
 
-# 有名角に対する正解辞書
+# 有名角に対する正解辞書 (変更なし)
 answers = {
     "sin": {
         -360: "0", -330: "1/2", -315: "√2/2", -300: "√3/2", -270: "1",
@@ -160,25 +190,45 @@ if st.session_state.show_result:
     
     st.subheader("全解答の確認")
     
-    # ✅ LaTeXのバックスラッシュを修正。LaTeXコマンドは \\、ラインブレイクは \\\\
-    # Python文字列: \def は \\def、\begin は \\begin
-    latex_table = "\\def\\arraystretch{2.5}\\begin{array}{|c|c|c|c|c|} \\hline 番号 & 問題 & あなたの解答 & 正解 & 正誤 \\hline "
+    # ✅ st.markdownとHTMLで結果表を構築（LaTeXコマンドをHTMLに直接埋め込む）
+    table_html = """
+    <table class="result-table">
+        <thead>
+            <tr>
+                <th>番号</th>
+                <th>問題</th>
+                <th>あなたの解答</th>
+                <th>正解</th>
+                <th>正誤</th>
+            </tr>
+        </thead>
+        <tbody>
+    """
     
     for i, item in enumerate(st.session_state.history, 1):
-        # 問題: \sin\left(30^\circ\right) の形式に
-        question_text = f"\\{item['func']}\\left({item['angle']}^\\circ\\right)" 
+        # 問題文: LaTeX形式
+        question_text = f"$\\{item['func']}\\left({item['angle']}^\\circ\\right)$" 
+        # 解答: LaTeX形式
         user_latex = latex_options.get(item['user_answer'], item['user_answer'])
         correct_latex = latex_options.get(item['correct_answer'], item['correct_answer'])
         
         mark = "○" if item['is_correct'] else "×"
+        mark_class = "correct" if item['is_correct'] else "incorrect"
         
-        # ラインブレイクは \\\\ 、\hline は \hline (Python文字列では \\hline)
-        latex_table += f"{i} & ${question_text}$ & {user_latex} & {correct_latex} & {mark} \\\\ \\hline "
+        table_html += f"""
+            <tr>
+                <td>{i}</td>
+                <td>{question_text}</td>
+                <td>{user_latex}</td>
+                <td>{correct_latex}</td>
+                <td class="{mark_class}">{mark}</td>
+            </tr>
+        """
+        
+    table_html += "</tbody></table>"
     
-    latex_table += "\\end{array}"
-    
-    # st.latexで表を表示
-    st.latex(latex_table)
+    # HTMLとしてレンダリング
+    st.markdown(table_html, unsafe_allow_html=True)
 
     if st.button("もう一度挑戦する"):
         st.session_state.clear()
